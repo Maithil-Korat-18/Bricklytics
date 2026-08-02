@@ -1,0 +1,37 @@
+import React from 'react';
+
+const AMENITIES_BY_TYPE = {
+  'Flat / Apartment': [
+    { id: 'Parking', label: 'Parking', category: 'General' },
+    { id: 'Lift', label: 'Lift', category: 'General' },
+    { id: 'Gym', label: 'Gym', category: 'Fitness' },
+    { id: 'Swimming Pool', label: 'Swimming Pool', category: 'Fitness' },
+    { id: 'Clubhouse', label: 'Clubhouse', category: 'Leisure' },
+    { id: 'Power Backup', label: 'Power Backup', category: 'General' },
+    { id: 'Security', label: 'Security', category: 'Safety' },
+    { id: 'CCTV', label: 'CCTV', category: 'Safety' },
+    { id: 'Garden', label: 'Garden', category: 'Leisure' },
+    { id: 'Children Play Area', label: 'Children Play Area', category: 'Family' },
+    { id: 'Jogging Track', label: 'Jogging Track', category: 'Fitness' },
+    { id: 'Indoor Games', label: 'Indoor Games', category: 'Leisure' },
+    { id: 'Visitor Parking', label: 'Visitor Parking', category: 'General' },
+    { id: 'Intercom', label: 'Intercom', category: 'Safety' },
+    { id: 'Fire Safety', label: 'Fire Safety', category: 'Safety' },
+  ],
+  'Villa / House': [
+    { id: 'Parking', label: 'Parking', category: 'General' },
+    { id: 'Garden', label: 'Garden', category: 'Leisure' },
+    { id: 'Swimming Pool', label: 'Swimming Pool', category: 'Fitness' },
+    { id: 'Terrace', label: 'Terrace', category: 'Leisure' },
+    { id: 'Security', label: 'Security', category: 'Safety' },
+    { id: 'Power Backup', label: 'Power Backup', category: 'General' },
+    { id: 'CCTV', label: 'CCTV', category: 'Safety' },
+    { id: 'Clubhouse', label: 'Clubhouse', category: 'Leisure' },
+    { id: 'Private Lawn', label: 'Private Lawn', category: 'Luxury' },
+    { id: 'Private Parking', label: 'Private Parking', category: 'Luxury' },
+    { id: 'Solar Power', label: 'Solar Power', category: 'Eco' },
+    { id: 'Rain Water Harvesting', label: 'Rain Water Harvesting', category: 'Eco' },
+  ],
+};
+
+export default AMENITIES_BY_TYPE;

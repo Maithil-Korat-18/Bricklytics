@@ -1,0 +1,3 @@
+"""
+accounts app package initialization
+"""
