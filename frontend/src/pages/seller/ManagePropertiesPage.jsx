@@ -7,6 +7,7 @@ import { useToast } from '../../components/common/ToastContext';
 import PageHeader from '../../components/common/PageHeader';
 import ContentContainer from '../../components/common/ContentContainer';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
+import { getPropertyMediaUrl } from '../../utils/propertyMedia';
 
 import {
   Search,
@@ -234,7 +235,7 @@ export default function ManagePropertiesPage() {
                   <div className="relative h-48 w-full overflow-hidden bg-slate-100 flex items-center justify-center">
                     {coverImage ? (
                       <img
-                        src={coverImage}
+                        src={getPropertyMediaUrl(coverImage)}
                         alt={prop.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />

@@ -18,6 +18,30 @@ import AmenitiesSelector from '../../components/forms/AmenitiesSelector';
 import ImageUploader from '../../components/forms/ImageUploader';
 import PreviewCard from '../../components/forms/PreviewCard';
 import { CheckCircle, AlertTriangle, RefreshCw, Trash2, Star } from 'lucide-react';
+import { getPropertyMediaUrl } from '../../utils/propertyMedia';
+
+const propertyTypeToFormValue = (propertyType) => {
+  switch (propertyType) {
+    case 'villa':
+    case 'house':
+      return 'Villa / House';
+    case 'plot':
+      return 'Plot / Land';
+    default:
+      return 'Flat / Apartment';
+  }
+};
+
+const propertyTypeToApiValue = (propertyType) => {
+  switch (propertyType) {
+    case 'Villa / House':
+      return 'villa';
+    case 'Plot / Land':
+      return 'plot';
+    default:
+      return 'apartment';
+  }
+};
 
 export default function EditPropertyPage() {
   const { id } = useParams();
@@ -46,7 +70,7 @@ export default function EditPropertyPage() {
 
           methods.reset({
             title: p.title || '',
-            propertyType: p.property_type === 'villa / House' ? 'Villa / House' : p.property_type === 'plot / Land' ? 'Plot / Land' : 'Flat / Apartment',
+            propertyType: propertyTypeToFormValue(p.property_type),
             listingType: p.sale_type === 'resale' ? 'Resale Property' : 'New Property',
             saleType: p.sale_type || 'new',
             reconstructionNeeded: p.reconstruction_needed || '',
@@ -116,7 +140,7 @@ export default function EditPropertyPage() {
       const payload = {
         title: data.title,
         description: data.description,
-        property_type: (data.propertyType || 'apartment').toLowerCase(),
+        property_type: propertyTypeToApiValue(data.propertyType),
         listing_type: 'sell',
         sale_type: data.saleType,
         reconstruction_needed: data.saleType === 'resale' ? data.reconstructionNeeded : '',
@@ -252,7 +276,7 @@ export default function EditPropertyPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {propertyData.images.map((img) => (
                   <div key={img.id} className="relative group rounded-xl overflow-hidden border border-gray-200 aspect-video bg-slate-100">
-                    <img src={img.url} alt="Property" className="w-full h-full object-cover" />
+                    <img src={getPropertyMediaUrl(img.url)} alt="Property" className="w-full h-full object-cover" />
                     {img.is_cover ? (
                       <span className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                         <Star className="w-3 h-3 fill-current" /> Cover

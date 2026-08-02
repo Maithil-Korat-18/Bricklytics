@@ -5,6 +5,7 @@ import { buyerApi } from '../../services/buyerApi';
 import { useToast } from '../../components/common/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { getPropertyDetailsPath } from '../../constants/routes';
+import { getPropertyMediaUrl } from '../../utils/propertyMedia';
 
 export default function PropertyCard({ property, isFavoriteInitial = false, onFavoriteToggle }) {
   const { isAuthenticated } = useAuth();
@@ -57,7 +58,7 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
       {/* Image Container */}
       <div className="relative h-52 overflow-hidden bg-slate-100">
         <img
-          src={coverImage}
+          src={getPropertyMediaUrl(coverImage)}
           alt={property.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />

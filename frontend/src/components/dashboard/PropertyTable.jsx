@@ -3,6 +3,7 @@ import { Building2, Edit, Eye, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Badge from '../common/Badge';
 import { ROUTES, getEditPropertyPath, getSellerPropertyDetailsPath } from '../../constants/routes';
+import { getPropertyMediaUrl } from '../../utils/propertyMedia';
 
 const formatDate = (value) => value ? new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value)) : '—';
 const formatPrice = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
@@ -34,7 +35,7 @@ export default function PropertyTable({ properties = [], onDelete }) {
             <tbody className="divide-y divide-slate-100 text-sm">
               {properties.map((property) => {
                 const propertyId = property.id;
-                const coverImage = property.images?.find((image) => image.is_cover)?.url || property.images?.[0]?.url;
+                const coverImage = getPropertyMediaUrl(property.images?.find((image) => image.is_cover)?.url || property.images?.[0]?.url);
                 return <tr key={propertyId} className="group transition-colors hover:bg-slate-50/50">
                   <td className="px-5 py-4"><div className="flex items-center gap-3">{coverImage ? <img src={coverImage} alt={property.title} className="h-12 w-12 rounded-xl object-cover ring-1 ring-slate-200" /> : <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400"><Building2 className="h-5 w-5" /></div>}<div><p className="font-semibold text-slate-900 transition-colors group-hover:text-blue-600">{property.title || 'Untitled Property'}</p><p className="text-xs text-slate-400">{property.locality || property.city || '—'}</p></div></div></td>
                   <td className="px-5 py-4 font-medium capitalize text-slate-600">{property.property_type || 'Property'}</td>

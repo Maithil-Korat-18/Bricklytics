@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Maximize2, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getPropertyMediaUrl } from '../../utils/propertyMedia';
 
 export default function ImageGallery({ images = [] }) {
   const fallbackImages = [
@@ -27,7 +28,7 @@ export default function ImageGallery({ images = [] }) {
       {/* Main Image Banner */}
       <div className="relative h-80 sm:h-96 w-full rounded-2xl overflow-hidden bg-slate-900 group shadow-card-soft">
         <img
-          src={activeImage.url}
+          src={getPropertyMediaUrl(activeImage.url)}
           alt="Property View"
           className="w-full h-full object-cover transition-all duration-300"
         />
@@ -71,7 +72,7 @@ export default function ImageGallery({ images = [] }) {
                 selectedIndex === idx ? 'border-blue-600 ring-2 ring-blue-500/20' : 'border-transparent opacity-70 hover:opacity-100'
               }`}
             >
-              <img src={img.url} alt="" className="w-full h-full object-cover" />
+              <img src={getPropertyMediaUrl(img.url)} alt="" className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -88,7 +89,7 @@ export default function ImageGallery({ images = [] }) {
           </button>
 
           <div className="relative max-w-5xl max-h-[85vh] w-full flex items-center justify-center">
-            <img src={activeImage.url} alt="" className="max-h-[80vh] max-w-full rounded-2xl object-contain shadow-2xl" />
+            <img src={getPropertyMediaUrl(activeImage.url)} alt="" className="max-h-[80vh] max-w-full rounded-2xl object-contain shadow-2xl" />
 
             {galleryImages.length > 1 && (
               <>

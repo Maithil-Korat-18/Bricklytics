@@ -7,6 +7,7 @@ import Badge from '../../components/common/Badge';
 import { useToast } from '../../components/common/ToastContext';
 import { ROUTES, getEditPropertyPath } from '../../constants/routes';
 import { propertyApi } from '../../services/propertyApi';
+import { getPropertyMediaUrl } from '../../utils/propertyMedia';
 
 const formatPrice = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
 const displayValue = (value) => value || '—';
@@ -74,7 +75,7 @@ export default function PropertyDetailsPage() {
     </div>
 
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 lg:col-span-2">{coverImage ? <img src={coverImage} alt={property.title} className="h-[360px] w-full object-cover" /> : <div className="flex h-[360px] items-center justify-center text-slate-400"><Building2 className="h-16 w-16" /></div>}</div>
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 lg:col-span-2">{coverImage ? <img src={getPropertyMediaUrl(coverImage)} alt={property.title} className="h-[360px] w-full object-cover" /> : <div className="flex h-[360px] items-center justify-center text-slate-400"><Building2 className="h-16 w-16" /></div>}</div>
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Property summary</p><p className="mt-3 text-3xl font-extrabold text-blue-600">{formatPrice(property.price)}</p><p className="mt-1 capitalize text-sm text-slate-500">{property.property_type}</p><p className="mt-5 border-t border-slate-100 pt-5 text-sm leading-relaxed text-slate-600">{property.description || 'No property description has been provided.'}</p></div>
     </div>
 
