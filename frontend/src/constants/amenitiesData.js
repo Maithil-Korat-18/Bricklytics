@@ -17,6 +17,11 @@ const AMENITIES_BY_TYPE = {
     { id: 'Visitor Parking', label: 'Visitor Parking', category: 'General' },
     { id: 'Intercom', label: 'Intercom', category: 'Safety' },
     { id: 'Fire Safety', label: 'Fire Safety', category: 'Safety' },
+    { id: 'Nearby School', label: 'Nearby School', category: 'Nearby' },
+    { id: 'Nearby Hospital', label: 'Nearby Hospital', category: 'Nearby' },
+    { id: 'Nearby Metro Station', label: 'Nearby Metro Station', category: 'Nearby' },
+    { id: 'Nearby Shopping Mall', label: 'Nearby Shopping Mall', category: 'Nearby' },
+    { id: 'Nearby ATM/BANK', label: 'Nearby ATM/Bank', category: 'Nearby' },
   ],
   'Villa / House': [
     { id: 'Parking', label: 'Parking', category: 'General' },
@@ -31,6 +36,11 @@ const AMENITIES_BY_TYPE = {
     { id: 'Private Parking', label: 'Private Parking', category: 'Luxury' },
     { id: 'Solar Power', label: 'Solar Power', category: 'Eco' },
     { id: 'Rain Water Harvesting', label: 'Rain Water Harvesting', category: 'Eco' },
+    { id: 'Nearby School', label: 'Nearby School', category: 'Nearby' },
+    { id: 'Nearby Hospital', label: 'Nearby Hospital', category: 'Nearby' },
+    { id: 'Nearby Metro Station', label: 'Nearby Metro Station', category: 'Nearby' },
+    { id: 'Nearby Shopping Mall', label: 'Nearby Shopping Mall', category: 'Nearby' },
+    { id: 'Nearby ATM/BANK', label: 'Nearby ATM/Bank', category: 'Nearby' },
   ],
 };
 

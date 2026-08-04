@@ -295,11 +295,35 @@ class PropertyService(BaseService):
                 {'month': 'Jun', 'avgPriceLakhs': round((average_price * 1.04) / 100000, 1), 'views': 580},
             ]
 
+            total_units_sold = sum(p.get('units_sold', 0) or 0 for p in all_props) + status_counts.get('sold', 0)
+            total_units_all = sum(p.get('total_units', 0) or 0 for p in all_props)
+            total_units_available = max(0, total_units_all - total_units_sold)
+
+            # Query real recent inquiries for seller properties
+            recent_inquiries = []
+            if property_ids:
+                inqs = VisitSchedule.objects(property_id__in=property_ids, is_deleted=False).order_by('-created_at')[:20]
+                for inq in inqs:
+                    prop_match = next((p for p in all_props if str(p.get('id')) == str(inq.property_id)), {})
+                    recent_inquiries.append({
+                        'id': str(inq.id),
+                        'initials': "".join([name[0] for name in (inq.buyer_name or 'Buyer').split()[:2]]).upper(),
+                        'name': inq.buyer_name,
+                        'contact': inq.buyer_email or inq.buyer_phone,
+                        'property': inq.property_title,
+                        'locality': prop_match.get('locality', 'Ahmedabad'),
+                        'message': inq.notes or f"Requested visit on {inq.preferred_date} at {inq.preferred_time}",
+                        'status': 'New' if inq.status == 'requested' else inq.status.capitalize(),
+                        'created_at': str(inq.created_at) if hasattr(inq, 'created_at') else '',
+                    })
+
             return {
                 'total_properties': max(total_properties, len(all_props)),
                 'average_price': average_price,
                 'total_views': sum(view_counts.values()),
                 'total_inquiries': sum(inquiry_counts.values()),
+                'total_units_sold': total_units_sold,
+                'total_units_available': total_units_available,
                 'status_counts': status_counts,
                 'property_type_counts': property_type_counts,
                 'prediction_count': len(all_predictions),
@@ -309,6 +333,7 @@ class PropertyService(BaseService):
                 'bhk_distribution': bhk_distribution,
                 'price_ranges': price_ranges,
                 'monthly_trends': monthly_trends,
+                'recent_inquiries': recent_inquiries,
             }
         except Exception as e:
             logger.error("Error generating analytics: %s", e)

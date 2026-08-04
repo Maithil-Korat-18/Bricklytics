@@ -1,88 +1,103 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 
 const STEPS = [
-  { id: 'basic', name: 'Basic Information' },
-  { id: 'details', name: 'Property Details' },
-  { id: 'pricing', name: 'Pricing & Images' },
-  { id: 'review', name: 'Review & Publish' },
+  { id: 'basic',    name: 'Basic Info' },
+  { id: 'location', name: 'Location' },
+  { id: 'amenities',name: 'Amenities' },
+  { id: 'media',    name: 'Media' },
+  { id: 'preview',  name: 'AI Preview' },
 ];
 
 export default function WizardStepper({ currentStep, onStepClick }) {
   return (
     <nav className="mb-8" aria-label="Progress">
-      {/* Desktop Stepper — Horizontal Bar */}
-      <div className="hidden sm:block">
-        <div className="relative flex items-center justify-between">
-          {/* Connection line (background) */}
-          <div className="absolute left-[10%] right-[10%] top-[18px] h-[2px] bg-slate-200 z-0" />
+      {/* Desktop Stepper — matches reference photo */}
+      <div className="hidden sm:flex items-start justify-between">
+        {STEPS.map((step, idx) => {
+          const isActive    = currentStep === idx;
+          const isCompleted = currentStep > idx;
+          const isFuture    = currentStep < idx;
+          const isLast      = idx === STEPS.length - 1;
+          const isAIStep    = idx === 4;
 
-          {/* Connection line (progress fill) */}
-          <div
-            className="absolute left-[10%] top-[18px] h-[2px] bg-emerald-500 z-[1] transition-all duration-700 ease-out"
-            style={{ width: `${(currentStep / (STEPS.length - 1)) * 80}%` }}
-          />
-
-          {STEPS.map((step, idx) => {
-            const isActive = currentStep === idx;
-            const isCompleted = currentStep > idx;
-            const isFuture = currentStep < idx;
-
-            return (
-              <div key={step.id} className="relative z-10 flex flex-col items-center" style={{ flex: '1' }}>
-                {/* Step indicator circle */}
+          return (
+            <React.Fragment key={step.id}>
+              {/* Step cell */}
+              <div className="flex flex-col items-center" style={{ minWidth: 80 }}>
+                {/* Circle badge */}
                 <button
                   type="button"
                   onClick={() => { if (isCompleted) onStepClick(idx); }}
                   disabled={isFuture}
-                  className={`
-                    w-9 h-9 rounded-full flex items-center justify-center transition-all duration-500 border-2
-                    ${isCompleted
-                      ? 'bg-emerald-500 border-emerald-500 text-white cursor-pointer hover:bg-emerald-600 hover:border-emerald-600 shadow-md shadow-emerald-500/25'
-                      : isActive
-                      ? 'bg-white border-blue-600 shadow-lg shadow-blue-500/20 ring-4 ring-blue-100'
-                      : 'bg-white border-slate-200 cursor-not-allowed'}
-                  `}
                   aria-label={step.name}
                   aria-current={isActive ? 'step' : undefined}
+                  className={`
+                    w-10 h-10 rounded-full flex items-center justify-center
+                    text-sm font-bold transition-all duration-300 border-2 select-none
+                    ${isCompleted
+                      ? 'bg-[#0058be] border-[#0058be] text-white cursor-pointer shadow-md shadow-[#0058be]/25 hover:bg-[#004395] hover:border-[#004395]'
+                      : isActive
+                      ? 'bg-[#0058be] border-[#0058be] text-white shadow-lg shadow-[#0058be]/25 animate-pulse-ring'
+                      : 'bg-[#eaedff] border-[#c2c6d6] text-[#424754] cursor-not-allowed'}
+                  `}
                 >
                   {isCompleted ? (
-                    <Check className="w-4 h-4 stroke-[3]" />
-                  ) : isActive ? (
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
+                    <Check className="w-4.5 h-4.5 stroke-[2.5]" />
+                  ) : isAIStep && isFuture ? (
+                    <Sparkles className="w-4 h-4 text-[#727785]" />
+                  ) : isAIStep && isActive ? (
+                    <Sparkles className="w-4 h-4 text-white" />
                   ) : (
-                    <span className="w-2 h-2 rounded-full bg-slate-300" />
+                    <span>{idx + 1}</span>
                   )}
                 </button>
 
-                {/* Step title label (no step numbers) */}
+                {/* Label */}
                 <span
                   className={`
-                    mt-2.5 text-xs font-semibold text-center transition-colors duration-300 max-w-[120px] leading-tight
-                    ${isActive ? 'text-blue-700 font-bold' : isCompleted ? 'text-emerald-700 font-semibold' : 'text-slate-400'}
+                    mt-2.5 text-xs font-semibold text-center leading-tight whitespace-nowrap
+                    transition-colors duration-300
+                    ${isActive
+                      ? 'text-[#0058be] font-bold'
+                      : isCompleted
+                      ? 'text-[#0058be]'
+                      : 'text-[#727785]'}
                   `}
                 >
                   {step.name}
                 </span>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Connector line between steps */}
+              {!isLast && (
+                <div
+                  className="flex-1 mt-5 mx-1"
+                  style={{ height: '1.5px', alignSelf: 'flex-start', marginTop: '19px' }}
+                >
+                  <div
+                    className="w-full h-full transition-all duration-500"
+                    style={{ backgroundColor: isCompleted ? '#0058be' : '#c2c6d6' }}
+                  />
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
       </div>
 
       {/* Mobile Stepper */}
       <div className="sm:hidden space-y-2">
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-bold text-blue-700">{STEPS[currentStep]?.name}</span>
-          <span className="text-[11px] text-slate-400 font-medium">
+          <span className="text-xs font-bold text-[#0058be]">{STEPS[currentStep]?.name}</span>
+          <span className="text-[11px] text-[#727785] font-medium">
             {currentStep + 1} of {STEPS.length}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           {STEPS.map((step, idx) => {
-            const isActive = currentStep === idx;
+            const isActive    = currentStep === idx;
             const isCompleted = currentStep > idx;
-
             return (
               <button
                 key={step.id}
@@ -92,10 +107,10 @@ export default function WizardStepper({ currentStep, onStepClick }) {
                 className={`
                   flex-1 h-2 rounded-full transition-all duration-500
                   ${isCompleted
-                    ? 'bg-emerald-500'
+                    ? 'bg-[#0058be]'
                     : isActive
-                    ? 'bg-blue-600 ring-2 ring-blue-200'
-                    : 'bg-slate-200'}
+                    ? 'bg-[#0058be] ring-2 ring-[#adc6ff]'
+                    : 'bg-[#dae2fd]'}
                 `}
                 aria-label={step.name}
               />

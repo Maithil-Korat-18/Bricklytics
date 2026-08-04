@@ -22,9 +22,15 @@ export default function LiveListingPreviewCard() {
   const isVilla = (propertyType || '').includes('Villa');
   const coverImageSrc = images && images.length > 0 ? (images[coverIndex] || images[0]) : null;
 
-  const formattedPrice = expectedPrice && !isNaN(Number(expectedPrice))
-    ? `₹${Number(expectedPrice).toLocaleString('en-IN')}`
-    : '₹ --';
+  const formatPriceCr = (val) => {
+    if (!val || isNaN(Number(val))) return '₹ --';
+    const num = Number(val);
+    if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)} Cr`;
+    if (num >= 100000) return `₹${(num / 100000).toFixed(2)} Lakhs`;
+    return `₹${num.toLocaleString('en-IN')}`;
+  };
+
+  const formattedPrice = formatPriceCr(expectedPrice);
 
   return (
     <div className="sticky top-6 bg-white rounded-2xl border border-slate-200/90 shadow-card-soft overflow-hidden transition-all duration-300">
@@ -84,9 +90,6 @@ export default function LiveListingPreviewCard() {
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Expected Price</span>
             <span className="text-xl font-black text-slate-900">{formattedPrice}</span>
           </div>
-          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200/80">
-            Negotiable
-          </span>
         </div>
 
         {/* Selected Amenities Chips */}

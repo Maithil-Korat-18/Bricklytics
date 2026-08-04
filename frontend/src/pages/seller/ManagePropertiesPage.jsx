@@ -152,12 +152,8 @@ export default function ManagePropertiesPage() {
             className="px-4 py-2 bg-slate-50 border border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           >
             <option value="">All Property Types</option>
-            <option value="apartment">Apartment</option>
-            <option value="villa">Villa</option>
-            <option value="house">House</option>
-            <option value="plot">Plot</option>
-            <option value="commercial">Commercial</option>
-            <option value="studio">Studio</option>
+            <option value="apartment">Flat / Apartment</option>
+            <option value="villa">Villa / House</option>
           </select>
 
           {/* Listing Type Filter */}
@@ -268,14 +264,18 @@ export default function ManagePropertiesPage() {
                     <div className="flex items-baseline justify-between pt-2 border-t border-gray-100">
                       <div>
                         <span className="text-xs text-gray-500">Price</span>
-                        <p className="text-xl font-extrabold text-blue-600">
-                          ₹{prop.price?.toLocaleString('en-IN')}
+                        <p className="text-lg font-black text-blue-600">
+                          {prop.price >= 10000000 
+                            ? `₹${(prop.price / 10000000).toFixed(2)} Cr` 
+                            : prop.price >= 100000 
+                            ? `₹${(prop.price / 100000).toFixed(2)} Lakhs` 
+                            : `₹${prop.price?.toLocaleString('en-IN')}`}
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs text-gray-500">Area</span>
-                        <p className="text-sm font-semibold text-gray-800">
-                          {prop.area_sqft} sq ft
+                        <span className="text-xs text-gray-500">Inventory Left</span>
+                        <p className="text-sm font-bold text-slate-800">
+                          {prop.units_available !== undefined ? `${prop.units_available} Left` : `${prop.area_sqft} sq ft`}
                         </p>
                       </div>
                     </div>
@@ -283,28 +283,31 @@ export default function ManagePropertiesPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="p-5 pt-0 flex items-center space-x-2">
-                  <Link
-                    to={`/seller/property/${prop.id}`}
-                    className="flex-1 py-2 px-4 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>View</span>
-                  </Link>
-                  <Link
-                    to={`/seller/edit-property/${prop.id}`}
-                    className="flex-1 py-2 px-4 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-gray-700 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors"
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </Link>
+                <div className="p-5 pt-0 space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Link
+                      to={`/seller/property/${prop.id}`}
+                      className="flex-1 py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-semibold flex items-center justify-center space-x-1 transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>View</span>
+                    </Link>
+                    <Link
+                      to={`/seller/edit-property/${prop.id}`}
+                      className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-gray-700 text-xs font-semibold flex items-center justify-center space-x-1 transition-colors"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteClick(prop)}
+                      className="py-2 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
 
-                  <button
-                    onClick={() => handleDeleteClick(prop)}
-                    className="py-2 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  
                 </div>
               </div>
             );

@@ -8,15 +8,12 @@ import { useToast } from '../../components/common/ToastContext';
 
 import PageHeader from '../../components/common/PageHeader';
 import ContentContainer from '../../components/common/ContentContainer';
+import LiveListingPreviewCard from '../../components/seller/wizard/LiveListingPreviewCard';
 
-import PropertyInformationSection from '../../components/forms/PropertyInformationSection';
-import LocationSection from '../../components/forms/LocationSection';
-import PropertyDetailsSection from '../../components/forms/PropertyDetailsSection';
-import PricingSection from '../../components/forms/PricingSection';
-import BuilderSection from '../../components/forms/BuilderSection';
-import AmenitiesSelector from '../../components/forms/AmenitiesSelector';
-import ImageUploader from '../../components/forms/ImageUploader';
-import PreviewCard from '../../components/forms/PreviewCard';
+import Step1BasicInfo from '../../components/seller/wizard/Step1BasicInfo';
+import Step2PropertyDetails from '../../components/seller/wizard/Step2PropertyDetails';
+import Step3PricingImages from '../../components/seller/wizard/Step3PricingImages';
+
 import { CheckCircle, AlertTriangle, RefreshCw, Trash2, Star } from 'lucide-react';
 import { getPropertyMediaUrl } from '../../utils/propertyMedia';
 
@@ -25,8 +22,6 @@ const propertyTypeToFormValue = (propertyType) => {
     case 'villa':
     case 'house':
       return 'Villa / House';
-    case 'plot':
-      return 'Plot / Land';
     default:
       return 'Flat / Apartment';
   }
@@ -36,8 +31,6 @@ const propertyTypeToApiValue = (propertyType) => {
   switch (propertyType) {
     case 'Villa / House':
       return 'villa';
-    case 'Plot / Land':
-      return 'plot';
     default:
       return 'apartment';
   }
@@ -68,15 +61,16 @@ export default function EditPropertyPage() {
           const p = res.data;
           setPropertyData(p);
 
+          const isResale = p.sale_type === 'resale';
+
           methods.reset({
             title: p.title || '',
             propertyType: propertyTypeToFormValue(p.property_type),
-            listingType: p.sale_type === 'resale' ? 'Resale Property' : 'New Property',
+            listingType: isResale ? 'Resale Property' : 'New Property',
             saleType: p.sale_type || 'new',
             reconstructionNeeded: p.reconstruction_needed || '',
             description: p.description || '',
 
-            country: 'India',
             state: p.state || 'Gujarat',
             city: p.city || 'Ahmedabad',
             locality: p.locality || '',
@@ -91,17 +85,21 @@ export default function EditPropertyPage() {
             superBuiltUpArea: p.super_built_up_area || '',
             floorNumber: p.floor_number || '',
             totalFloors: p.total_floors || '',
+            unitsPerFloor: p.units_per_floor || '',
+            totalUnits: p.total_units || '',
+            unitsSold: p.units_sold || '',
             propertyAge: p.property_age || '',
             facing: p.facing || '',
             furnishing: p.furnishing || '',
-            parking: p.parking || '',
-            waterSupply: '24 Hours',
-            powerBackup: 'Yes',
+
+            houseType: p.house_type || '',
+            landArea: p.land_area || '',
+            sampleHouseReady: p.sample_house_ready === true,
+            layoutType: p.layout_type || '',
 
             expectedPrice: p.price || '',
             maintenanceCharges: p.maintenance_charges || '',
             bookingAmount: p.booking_amount || '',
-            negotiable: p.negotiable ?? true,
 
             builderName: p.builder_name || '',
             projectName: p.project_name || '',
@@ -109,14 +107,10 @@ export default function EditPropertyPage() {
             possessionStatus: p.possession_status || 'Ready',
             possessionDate: p.possession_date || '',
 
-            amenities: (p.amenities || []).map((a) => a.name),
+            amenities: (p.amenities || []).map((a) => (typeof a === 'string' ? a : a.name)),
+            nearbyPlaces: p.nearby_places || [],
             images: (p.images || []).map((img) => img.url),
             coverIndex: (p.images || []).findIndex((img) => img.is_cover) >= 0 ? (p.images || []).findIndex((img) => img.is_cover) : 0,
-
-            sellerName: p.seller_name || '',
-            phoneNumber: p.phone_number || '',
-            email: p.email || '',
-            preferredContactTime: 'Anytime',
           });
         }
       } catch (err) {
@@ -137,16 +131,18 @@ export default function EditPropertyPage() {
     setErrorMessage('');
 
     try {
+      const isResale = data.listingType === 'Resale Property' || data.saleType === 'resale';
+
       const payload = {
         title: data.title,
         description: data.description,
         property_type: propertyTypeToApiValue(data.propertyType),
         listing_type: 'sell',
-        sale_type: data.saleType,
-        reconstruction_needed: data.saleType === 'resale' ? data.reconstructionNeeded : '',
+        sale_type: isResale ? 'resale' : 'new',
+        reconstruction_needed: isResale ? data.reconstructionNeeded : '',
         price: Number(data.expectedPrice),
         rate_per_sqft: Number(data.expectedPrice) && Number(data.carpetArea) ? Math.round(Number(data.expectedPrice) / Number(data.carpetArea)) : 0,
-        bhk: data.bedrooms ? Number(data.bedrooms) : 1,
+        bhk: data.bhk ? Number(data.bhk) : 1,
         bedrooms: data.bedrooms ? Number(data.bedrooms) : 0,
         bathrooms: data.bathrooms ? Number(data.bathrooms) : 0,
         balconies: data.balconies ? Number(data.balconies) : 0,
@@ -155,31 +151,30 @@ export default function EditPropertyPage() {
         super_built_up_area: data.superBuiltUpArea ? Number(data.superBuiltUpArea) : null,
         floor_number: data.floorNumber ? Number(data.floorNumber) : 1,
         total_floors: data.totalFloors ? Number(data.totalFloors) : 1,
-        property_age: data.propertyAge ? Number(data.propertyAge) : 0,
-        year_built: data.propertyAge ? (new Date().getFullYear() - Number(data.propertyAge)) : new Date().getFullYear(),
-        facing: data.facing || 'East',
+        units_per_floor: data.unitsPerFloor ? Number(data.unitsPerFloor) : 0,
+        total_units: data.totalFloors && data.unitsPerFloor ? Number(data.totalFloors) * Number(data.unitsPerFloor) : (data.totalUnits ? Number(data.totalUnits) : 0),
+        units_sold: data.unitsSold ? Number(data.unitsSold) : 0,
+        sample_house_ready: data.sampleHouseReady === true,
+        layout_type: data.layoutType || '',
+        nearby_places: data.nearbyPlaces || [],
+        property_age: isResale && data.propertyAge ? Number(data.propertyAge) : 0,
+        facing: isResale && data.facing ? data.facing : 'East',
         furnishing: data.furnishing || 'Unfurnished',
-        parking: data.parking || 'Yes',
 
         address: data.fullAddress,
         locality: data.locality,
         city: 'Ahmedabad',
         state: 'Gujarat',
-        pincode: propertyData?.pincode || '',
+        pincode: propertyData?.pincode || '380001',
 
         maintenance_charges: data.maintenanceCharges ? Number(data.maintenanceCharges) : 0,
         booking_amount: data.bookingAmount ? Number(data.bookingAmount) : 0,
-        negotiable: data.negotiable ?? true,
 
-        builder_name: data.builderName || '',
-        project_name: data.projectName || '',
+        builderName: data.builderName || '',
+        projectName: data.projectName || '',
         rera_number: data.reraNumber || '',
         possession_status: data.possessionStatus || 'Ready',
         possession_date: data.possessionDate || '',
-
-        seller_name: data.sellerName || '',
-        phone_number: data.phoneNumber || '',
-        email: data.email || '',
 
         amenities: (data.amenities || []).map((name) => ({ name, category: 'General' })),
       };
@@ -237,8 +232,8 @@ export default function EditPropertyPage() {
     return (
       <ContentContainer>
         <div className="py-20 text-center space-y-4">
-          <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
-          <p className="text-sm font-medium text-gray-500">Loading property details...</p>
+          <RefreshCw className="w-8 h-8 text-[#0058be] animate-spin mx-auto" />
+          <p className="text-sm font-medium text-[#727785]">Loading property details...</p>
         </div>
       </ContentContainer>
     );
@@ -250,42 +245,42 @@ export default function EditPropertyPage() {
         <ContentContainer>
           <PageHeader
             title={`Edit Property: ${propertyData?.title || `#${id}`}`}
-            description="Update listing information, manage images, and update price expectations."
+            description="Update listing information, unit availability, and pricing."
           />
 
           {/* Success Banner */}
           {successMessage && (
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center space-x-3 shadow-sm animate-fadeIn">
-              <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <div className="p-4 rounded-2xl bg-[#f5fff6] border border-[#00855b]/30 text-[#006947] text-sm font-semibold flex items-center space-x-3 shadow-ambient animate-fadeIn">
+              <CheckCircle className="w-5 h-5 text-[#006947] flex-shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
 
           {/* Error Banner */}
           {errorMessage && (
-            <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-sm font-semibold flex items-center space-x-3 shadow-sm animate-fadeIn">
-              <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <div className="p-4 rounded-2xl bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#93000a] text-sm font-semibold flex items-center space-x-3 shadow-ambient animate-fadeIn">
+              <AlertTriangle className="w-5 h-5 text-[#ba1a1a] flex-shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {/* Existing Backend Uploaded Images Gallery */}
           {propertyData?.images && propertyData.images.length > 0 && (
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4 shadow-sm">
-              <h3 className="text-md font-bold text-gray-900">Saved Images Gallery</h3>
+            <div className="bg-white border border-[#e2e7ff] rounded-2xl p-6 space-y-4 shadow-ambient">
+              <h3 className="text-md font-bold text-[#131b2e]">Saved Images Gallery</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {propertyData.images.map((img) => (
-                  <div key={img.id} className="relative group rounded-xl overflow-hidden border border-gray-200 aspect-video bg-slate-100">
+                  <div key={img.id} className="relative group rounded-xl overflow-hidden border border-[#e2e7ff] aspect-video bg-[#f2f3ff]">
                     <img src={getPropertyMediaUrl(img.url)} alt="Property" className="w-full h-full object-cover" />
                     {img.is_cover ? (
-                      <span className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                      <span className="absolute top-2 left-2 bg-[#0058be] text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                         <Star className="w-3 h-3 fill-current" /> Cover
                       </span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => handleSetCover(img.id)}
-                        className="absolute top-2 left-2 bg-black/60 hover:bg-blue-600 text-white text-[10px] font-medium px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 left-2 bg-black/60 hover:bg-[#0058be] text-white text-[10px] font-medium px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         Set Cover
                       </button>
@@ -293,7 +288,7 @@ export default function EditPropertyPage() {
                     <button
                       type="button"
                       onClick={() => handleDeleteImage(img.id)}
-                      className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-red-600 text-white transition-colors"
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-[#ba1a1a] text-white transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -306,25 +301,22 @@ export default function EditPropertyPage() {
           {/* Main 2-Column Form Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              <PropertyInformationSection />
-              <LocationSection hidePincode />
-              <PropertyDetailsSection />
-              <PricingSection />
-              <BuilderSection />
-              <AmenitiesSelector />
-              <ImageUploader />
+              <Step1BasicInfo mode="basic" />
+              <Step1BasicInfo mode="location" />
+              <Step2PropertyDetails />
+              <Step3PricingImages />
             </div>
 
             <div className="lg:col-span-1 space-y-6">
-              <PreviewCard />
+              <LiveListingPreviewCard />
             </div>
           </div>
         </ContentContainer>
 
-        <div className="sticky bottom-0 z-40 border-t border-slate-200 bg-white/90 p-4 backdrop-blur-md">
+        <div className="sticky bottom-0 z-40 border-t border-[#e2e7ff] bg-white/90 p-4 backdrop-blur-md">
           <div className="mx-auto flex max-w-7xl justify-end gap-3">
-            <button type="button" onClick={() => navigate(-1)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={saving} className="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-50">{saving ? 'Updating...' : 'Update Property'}</button>
+            <button type="button" onClick={() => navigate(-1)} className="rounded-xl border border-[#c2c6d6] px-5 py-2.5 text-xs font-semibold text-[#424754] hover:bg-[#f2f3ff]">Cancel</button>
+            <button type="submit" disabled={saving} className="rounded-xl bg-[#0058be] px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#004395] disabled:opacity-50">{saving ? 'Updating...' : 'Update Property'}</button>
           </div>
         </div>
       </form>

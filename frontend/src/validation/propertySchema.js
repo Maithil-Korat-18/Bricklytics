@@ -50,6 +50,12 @@ export const propertySchema = z.object({
   landArea: optionalNumber,
   garden: z.string().optional(),
   terrace: z.string().optional(),
+  unitsPerFloor: optionalNumber,
+  totalUnits: optionalNumber,
+  unitsSold: optionalNumber,
+  sampleHouseReady: z.boolean().optional(),
+  layoutType: z.string().optional(),
+  nearbyPlaces: z.array(z.string()).optional(),
 
   // Pricing Validation
   expectedPrice: z.preprocess(

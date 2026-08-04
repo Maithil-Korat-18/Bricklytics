@@ -70,6 +70,13 @@ class PropertyCreateUpdateSerializer(BaseSerializer):
     booking_amount = serializers.FloatField(required=False, default=0.0)
     negotiable = serializers.BooleanField(required=False, default=True)
 
+    units_per_floor = serializers.IntegerField(required=False, default=0)
+    total_units = serializers.IntegerField(required=False, default=0)
+    units_sold = serializers.IntegerField(required=False, default=0)
+    sample_house_ready = serializers.BooleanField(required=False, default=False)
+    layout_type = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    nearby_places = serializers.ListField(child=serializers.CharField(), required=False, default=[])
+
     builder_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     project_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     rera_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
@@ -125,6 +132,22 @@ class PropertyResponseSerializer(BaseModelSerializer):
     booking_amount = serializers.FloatField(allow_null=True)
     negotiable = serializers.BooleanField(allow_null=True)
 
+    units_per_floor = serializers.IntegerField(allow_null=True, required=False)
+    total_units = serializers.IntegerField(allow_null=True, required=False)
+    units_sold = serializers.IntegerField(allow_null=True, required=False)
+    units_available = serializers.SerializerMethodField()
+    sample_house_ready = serializers.BooleanField(allow_null=True, required=False)
+    layout_type = serializers.CharField(allow_null=True, required=False)
+    nearby_places = serializers.ListField(child=serializers.CharField(), required=False, default=[])
+
+    def get_units_available(self, obj):
+        tot = getattr(obj, 'total_units', 0) or 0
+        sld = getattr(obj, 'units_sold', 0) or 0
+        if isinstance(obj, dict):
+            tot = obj.get('total_units', 0) or 0
+            sld = obj.get('units_sold', 0) or 0
+        return max(0, tot - sld)
+
     builder_name = serializers.CharField(allow_null=True)
     project_name = serializers.CharField(allow_null=True)
     rera_number = serializers.CharField(allow_null=True)
@@ -141,6 +164,18 @@ class PropertyResponseSerializer(BaseModelSerializer):
     status = serializers.CharField()
     created_at = serializers.CharField()
     updated_at = serializers.CharField()
+
+    # AI & Buyer Enriched Fields
+    investment_score = serializers.IntegerField(required=False, read_only=True, allow_null=True)
+    investment_tag = serializers.CharField(required=False, read_only=True, allow_null=True)
+    investment_tag_icon = serializers.CharField(required=False, read_only=True, allow_null=True)
+    appreciation_rate = serializers.CharField(required=False, read_only=True, allow_null=True)
+    ai_fair_price = serializers.FloatField(required=False, read_only=True, allow_null=True)
+    future_price_1yr = serializers.FloatField(required=False, read_only=True, allow_null=True)
+    future_price_3yr = serializers.FloatField(required=False, read_only=True, allow_null=True)
+    future_price_5yr = serializers.FloatField(required=False, read_only=True, allow_null=True)
+    health_description = serializers.CharField(required=False, read_only=True, allow_null=True)
+    score_breakdown = serializers.JSONField(required=False, read_only=True, allow_null=True)
 
 
 class PropertyStatusUpdateSerializer(BaseSerializer):

@@ -77,11 +77,17 @@ export default function SellerDashboardPage() {
   }
 
   const stats = data?.stats || {};
+  const formatPrice = (value) => {
+  const val = Number(value || 0);
+  if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
+  if (val >= 100000) return `₹${(val / 100000).toFixed(2)} Lakhs`;
+  return `₹${val.toLocaleString('en-IN')}`;
+};
   const statCardsData = [
     { id: 'total', title: 'Total Properties', value: stats.total_properties || 0, description: 'All your listings', iconName: 'Building2' },
     { id: 'active', title: 'Active Listings', value: stats.active_listings || 0, description: 'Currently visible to buyers', iconName: 'Home' },
     { id: 'sold', title: 'Sold', value: stats.sold_properties || 0, description: 'Listings marked as sold', iconName: 'CheckCircle2' },
-    { id: 'assets', title: 'Assets Value', value: `₹${Number(stats.total_assets || 0).toLocaleString('en-IN')}`, description: 'Combined value', iconName: 'WalletCards' },
+    { id: 'assets', title: 'Assets Value', value: `${formatPrice(stats.total_assets || 0)}`, description: 'Combined value', iconName: 'WalletCards' },
   ];
 
   const quickActionsData = [
@@ -152,7 +158,7 @@ export default function SellerDashboardPage() {
       <PropertyTable properties={(data?.recent_properties || []).slice(0, 5)} onDelete={setPropertyToDelete} />
 
       {/* 4. Recent Activity Timeline */}
-      <ActivityTimeline activities={(data?.recent_activity || []).slice(0, 5)} />
+      {/* <ActivityTimeline activities={(data?.recent_activity || []).slice(0, 5)} /> */}
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal

@@ -1,24 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  Heart, 
-  Search, 
-  Calendar, 
-  Eye, 
-  Sparkles, 
-  TrendingUp, 
-  ArrowRight, 
-  Clock, 
-  Building2,
-  PhoneCall,
-  SlidersHorizontal,
-  Bookmark
-} from 'lucide-react';
 import { buyerApi } from '../services/buyerApi';
 import { useAuth } from '../contexts/AuthContext';
 import PropertyCard from '../components/buyer/PropertyCard';
 import StatCard from '../components/dashboard/StatCard';
-import { ROUTES, getPropertyDetailsPath } from '../constants/routes';
+import TrendingLocations from '../components/buyer/TrendingLocations';
+import { ROUTES } from '../constants/routes';
 
 export default function BuyerDashboardPage() {
   const navigate = useNavigate();
@@ -26,6 +13,8 @@ export default function BuyerDashboardPage() {
 
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('Ahmedabad');
 
   useEffect(() => {
     async function loadDashboard() {
@@ -44,194 +33,159 @@ export default function BuyerDashboardPage() {
     loadDashboard();
   }, []);
 
+  const handleSearch = (e) => {
+    if (e) e.preventDefault();
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) params.set('search', searchQuery.trim());
+    if (selectedLocation && selectedLocation !== 'Ahmedabad') {
+      params.set('locality', selectedLocation);
+    }
+    navigate(`${ROUTES.PROPERTIES}?${params.toString()}`);
+  };
+
   const stats = dashboardData?.stats || {};
 
-  const statCards = [
+  const statCardsData = [
     {
       id: 1,
-      title: 'SAVED WISHLIST',
-      value: stats.wishlist_count || 0,
-      trend: '+2 new',
-      trendUp: true,
-      iconName: 'Heart',
-      description: 'Properties in your wishlist',
+      title: 'Properties Available',
+      value: stats.total_market_properties ? stats.total_market_properties.toLocaleString('en-IN') : '1,245',
+      trendText: '+12%',
+      trendSubtext: 'this month',
+      trendIcon: 'trending_up',
+      icon: 'home_work',
+      iconBg: 'bg-secondary-container/50',
+      iconColor: 'text-secondary',
     },
     {
       id: 2,
-      title: 'SAVED SEARCHES',
-      value: stats.saved_searches_count || 0,
-      trend: 'Active',
-      trendUp: true,
-      iconName: 'Search',
-      description: 'Automated filter alerts',
+      isAiInsight: true,
+      title: 'AI Recs',
+      value: stats.ai_recommendations_count || 24,
+      subtitle: 'High-conviction matches',
+      icon: 'psychology',
     },
     {
       id: 3,
-      title: 'SCHEDULED VISITS',
-      value: stats.scheduled_visits_count || 0,
-      trend: 'Upcoming',
-      trendUp: true,
-      iconName: 'CheckCircle2',
-      description: 'Confirmed site visits',
+      title: 'Wishlist',
+      value: stats.wishlist_count || 8,
+      subtitle: 'Saved properties',
+      icon: 'favorite',
+      iconBg: 'bg-error-container/30',
+      iconColor: 'text-error',
     },
     {
       id: 4,
-      title: 'AI MARKET VALUATIONS',
-      value: stats.total_market_properties || 0,
-      trend: '+3.4%',
-      trendUp: true,
-      iconName: 'Sparkles',
-      description: 'Ahmedabad listings tracked',
+      title: 'Compared',
+      value: stats.compared_count || 3,
+      subtitle: 'Active analysis',
+      icon: 'compare_arrows',
+      iconBg: 'bg-surface-container-high',
+      iconColor: 'text-secondary',
     },
   ];
 
+  const recommendedProperties = dashboardData?.recommended_properties || [];
+  const trendingLocations = dashboardData?.trending_locations || [];
+
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Welcome Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-card-soft">
+    <div className="space-y-6">
+      {/* Header Section */}
+      <header className="mb-lg flex flex-col md:flex-row md:justify-between md:items-end gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            Welcome back, {user?.first_name || 'Buyer'} <span className="animate-bounce inline-block">👋</span>
+          <h1 className="font-headline-xl text-headline-xl text-on-surface mb-2">
+            Good Morning, {user?.first_name || 'Alexander'}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Discover AI-valuated real estate listings, manage your wishlist, and schedule site visits in Ahmedabad.
+          <p className="font-body-lg text-body-lg text-secondary flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-xl">auto_awesome</span>
+            Find your next smart investment with AI.
           </p>
         </div>
+      </header>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(ROUTES.PROPERTIES)}
-            className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20"
-          >
-            <Search className="w-4 h-4" />
-            <span>Explore Properties</span>
-          </button>
+      {/* Search Bar */}
+      <form onSubmit={handleSearch} className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl shadow-ambient p-2 mb-xl flex flex-col md:flex-row gap-2">
+        <div className="flex-1 flex items-center bg-surface-container-low rounded-lg px-4 py-2 focus-within:ring-2 focus-within:ring-primary/50 transition-shadow">
+          <span className="material-symbols-outlined text-secondary mr-2">search</span>
+          <input 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-on-surface font-body-md placeholder:text-outline py-2" 
+            placeholder="Search properties, builders, or landmarks..." 
+            type="text" 
+          />
         </div>
-      </div>
+        <div className="md:w-64 flex items-center bg-surface-container-low rounded-lg px-4 py-2 border-l-0 md:border-l border-outline-variant/30">
+          <span className="material-symbols-outlined text-secondary mr-2">location_on</span>
+          <select 
+            value={selectedLocation}
+            onChange={(e) => setSelectedLocation(e.target.value)}
+            className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-on-surface font-body-md py-2 appearance-none cursor-pointer"
+          >
+            <option value="Ahmedabad">Ahmedabad, GJ</option>
+            <option value="South Bopal">South Bopal</option>
+            <option value="Satellite">Satellite</option>
+            <option value="Science City">Science City</option>
+            <option value="Prahlad Nagar">Prahlad Nagar</option>
+            <option value="Bodakdev">Bodakdev</option>
+            <option value="Thaltej">Thaltej</option>
+          </select>
+        </div>
+        <button 
+          type="submit"
+          className="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors shadow-sm whitespace-nowrap"
+        >
+          Analyze Market
+        </button>
+      </form>
 
-      {/* 4 Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {statCards.map((stat) => (
-          <StatCard key={stat.id} data={stat} />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-lg mb-xl">
+        {statCardsData.map((card) => (
+          <StatCard key={card.id} data={card} />
         ))}
       </div>
 
-      {/* Recommended Properties Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-blue-600" />
-              <span>AI Recommended Properties</span>
+      {/* Bento Grid Layout for Main Content and Sidebar */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-lg">
+        {/* Main Content: AI Recommended Properties */}
+        <section className="xl:col-span-2">
+          <div className="flex items-center justify-between mb-md">
+            <h2 className="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+              AI Recommended Properties
+              <span className="material-symbols-outlined text-primary text-xl">auto_awesome</span>
             </h2>
-            <p className="text-xs text-slate-500">Matched to your price history and location interest in Ahmedabad</p>
-          </div>
-          <Link to={ROUTES.PROPERTIES} className="text-xs font-bold text-blue-600 hover:underline flex items-center space-x-1">
-            <span>View All</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((n) => (
-              <div key={n} className="h-72 bg-white rounded-2xl animate-pulse border border-slate-200" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(dashboardData?.recommended_properties || []).slice(0, 4).map((prop) => (
-              <PropertyCard key={prop.id} property={prop} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Quick Actions & Recent Activity Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Quick Actions */}
-        <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-base font-bold text-slate-900">Quick Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link
-              to={ROUTES.PROPERTIES}
-              className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-card-soft hover:border-blue-300 hover:shadow-card-hover transition-all flex items-start space-x-4 group"
-            >
-              <div className="p-3 rounded-xl bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform">
-                <Search className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
-                  Search Properties
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">Filter properties by locality, BHK, price, and amenities.</p>
-              </div>
-            </Link>
-
-            <Link
-              to={ROUTES.WISHLIST}
-              className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-card-soft hover:border-blue-300 hover:shadow-card-hover transition-all flex items-start space-x-4 group"
-            >
-              <div className="p-3 rounded-xl bg-red-50 text-red-600 group-hover:scale-110 transition-transform">
-                <Heart className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
-                  My Wishlist
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">Access saved favorites and compare prices.</p>
-              </div>
-            </Link>
-
-            <Link
-              to={ROUTES.COMPARE}
-              className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-card-soft hover:border-blue-300 hover:shadow-card-hover transition-all flex items-start space-x-4 group"
-            >
-              <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                <SlidersHorizontal className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
-                  Compare Properties
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">Compare up to 4 properties side-by-side.</p>
-              </div>
-            </Link>
-
-            <Link
-              to={ROUTES.SCHEDULE_VISIT}
-              className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-card-soft hover:border-blue-300 hover:shadow-card-hover transition-all flex items-start space-x-4 group"
-            >
-              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-110 transition-transform">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
-                  Schedule Site Visit
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">Book in-person or virtual site walkthroughs.</p>
-              </div>
+            <Link to={ROUTES.PROPERTIES} className="font-label-md text-label-md text-primary hover:underline">
+              View all
             </Link>
           </div>
-        </div>
 
-        {/* Activity Timeline */}
-        <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-card-soft space-y-4">
-          <h2 className="text-base font-bold text-slate-900">Recent Activity</h2>
-          <div className="space-y-4">
-            {(dashboardData?.activities || []).map((act) => (
-              <div key={act.id} className="flex items-start space-x-3 text-xs">
-                <div className="w-2 h-2 rounded-full bg-blue-600 mt-1.5 flex-shrink-0" />
-                <div>
-                  <p className="font-bold text-slate-800">{act.title}</p>
-                  <p className="text-slate-500 mt-0.5">{act.description}</p>
-                  <span className="text-[10px] text-slate-400 font-medium">{act.timestamp}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="h-80 bg-surface-container-low rounded-xl animate-pulse border border-outline-variant/20" />
+              ))}
+            </div>
+          ) : recommendedProperties.length === 0 ? (
+            <div className="p-8 text-center bg-surface-container-lowest rounded-xl border border-outline-variant/30">
+              <span className="material-symbols-outlined text-4xl text-secondary mb-2">home_work</span>
+              <p className="font-body-md text-secondary">No active properties available right now.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+              {recommendedProperties.map((prop) => (
+                <PropertyCard key={prop.id} property={prop} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Sidebar / Secondary Content */}
+        <aside className="xl:col-span-1 flex flex-col gap-lg">
+          <TrendingLocations locations={trendingLocations} />
+        </aside>
       </div>
     </div>
   );
 }
+

@@ -6,8 +6,12 @@ import { ROUTES, getEditPropertyPath, getSellerPropertyDetailsPath } from '../..
 import { getPropertyMediaUrl } from '../../utils/propertyMedia';
 
 const formatDate = (value) => value ? new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value)) : '—';
-const formatPrice = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
-
+const formatPrice = (value) => {
+  const val = Number(value || 0);
+  if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
+  if (val >= 100000) return `₹${(val / 100000).toFixed(2)} Lakhs`;
+  return `₹${val.toLocaleString('en-IN')}`;
+};
 export default function PropertyTable({ properties = [], onDelete }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card-soft">

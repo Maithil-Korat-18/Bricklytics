@@ -91,6 +91,14 @@ class Property(SellerBaseDocument):
     booking_amount = me.FloatField(default=0.0)
     negotiable = me.BooleanField(default=True)
 
+    # Unit Tracking & Building Specs
+    units_per_floor = me.IntField(default=0)
+    total_units = me.IntField(default=0)
+    units_sold = me.IntField(default=0)
+    sample_house_ready = me.BooleanField(default=False)
+    layout_type = me.StringField(required=False, null=True)
+    nearby_places = me.ListField(me.StringField(), default=list)
+
     # Builder & Legal Details
     builder_name = me.StringField(required=False, null=True)
     project_name = me.StringField(required=False, null=True)

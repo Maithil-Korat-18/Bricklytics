@@ -45,6 +45,9 @@ const defaultValues = {
   superBuiltUpArea: '',
   floorNumber: '',
   totalFloors: '',
+  unitsPerFloor: '',
+  totalUnits: '',
+  unitsSold: '',
   propertyAge: '',
   facing: '',
   furnishing: '',
@@ -56,11 +59,12 @@ const defaultValues = {
   landArea: '',
   garden: '',
   terrace: '',
+  sampleHouseReady: false,
+  layoutType: '',
 
   expectedPrice: '',
   maintenanceCharges: '',
   bookingAmount: '',
-  negotiable: true,
 
   builderName: '',
   projectName: '',
@@ -69,11 +73,19 @@ const defaultValues = {
   possessionDate: '',
 
   amenities: [],
+  nearbyPlaces: [],
   images: [],
   coverIndex: 0,
   rawImageFiles: [],
   rawBrochureFile: null,
 };
+
+// Wizard step mapping:
+//  0 — Basic Info    (title, type, sale, description)
+//  1 — Location      (state, city, locality, address)
+//  2 — Amenities     (property specs + amenity selection — from Step2PropertyDetails)
+//  3 — Media         (images, brochure, pricing — from Step3PricingImages)
+//  4 — AI Preview    (review & publish — from Step4ReviewPublish)
 
 export default function AddPropertyWizard() {
   const { showSuccess, showError } = useToast();
@@ -93,19 +105,26 @@ export default function AddPropertyWizard() {
   const nextStep = async () => {
     setErrorMessage('');
     let fieldsToValidate = [];
+
     if (currentStep === 0) {
-      fieldsToValidate = ['title', 'propertyType', 'listingType', 'locality', 'fullAddress'];
+      // Basic Info: title, propertyType, listingType, description
+      fieldsToValidate = ['title', 'propertyType', 'listingType'];
       const isResale = methods.getValues('listingType') === 'Resale Property' || methods.getValues('saleType') === 'resale';
       if (isResale) fieldsToValidate.push('reconstructionNeeded');
     } else if (currentStep === 1) {
-      fieldsToValidate = ['carpetArea'];
+      // Location: locality, fullAddress
+      fieldsToValidate = ['locality', 'fullAddress'];
     } else if (currentStep === 2) {
+      // Amenities: carpetArea required
+      fieldsToValidate = ['carpetArea'];
+    } else if (currentStep === 3) {
+      // Media: expectedPrice required
       fieldsToValidate = ['expectedPrice'];
     }
 
     const isValid = await trigger(fieldsToValidate);
     if (isValid) {
-      setCurrentStep((prev) => Math.min(prev + 1, 3));
+      setCurrentStep((prev) => Math.min(prev + 1, 4));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       const stateErrors = methods.formState.errors;
@@ -141,7 +160,7 @@ export default function AddPropertyWizard() {
         listing_type: 'sell',
         sale_type: isResale ? 'resale' : 'new',
         reconstruction_needed: isResale ? data.reconstructionNeeded : '',
-        status: 'active', // Explicit active property listing
+        status: 'active',
         price: Number(data.expectedPrice),
         rate_per_sqft: Number(data.expectedPrice) && Number(data.carpetArea) ? Math.round(Number(data.expectedPrice) / Number(data.carpetArea)) : 0,
         bhk: data.bhk ? Number(data.bhk) : 1,
@@ -153,8 +172,14 @@ export default function AddPropertyWizard() {
         super_built_up_area: data.superBuiltUpArea ? Number(data.superBuiltUpArea) : null,
         floor_number: data.floorNumber ? Number(data.floorNumber) : 1,
         total_floors: data.totalFloors ? Number(data.totalFloors) : 1,
-        property_age: data.propertyAge ? Number(data.propertyAge) : 0,
-        facing: data.facing || 'East',
+        units_per_floor: data.unitsPerFloor ? Number(data.unitsPerFloor) : 0,
+        total_units: data.totalFloors && data.unitsPerFloor ? Number(data.totalFloors) * Number(data.unitsPerFloor) : (data.totalUnits ? Number(data.totalUnits) : 0),
+        units_sold: data.unitsSold ? Number(data.unitsSold) : 0,
+        sample_house_ready: data.sampleHouseReady === true,
+        layout_type: data.layoutType || '',
+        nearby_places: data.nearbyPlaces || [],
+        property_age: isResale && data.propertyAge ? Number(data.propertyAge) : 0,
+        facing: isResale && data.facing ? data.facing : 'East',
         furnishing: data.furnishing || 'Unfurnished',
         parking: data.parking || 'Yes',
 
@@ -218,56 +243,68 @@ export default function AddPropertyWizard() {
           description="Interactive multi-step listing wizard with real-time live preview & AI valuation engine."
         />
 
-        {/* Modern Stepper Navigation Header */}
+        {/* 5-Step Wizard Stepper */}
         <WizardStepper currentStep={currentStep} onStepClick={(stepIdx) => setCurrentStep(stepIdx)} />
 
         {/* Success Banner */}
         {successMessage && (
-          <div className="p-4 mb-6 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-sm font-semibold flex items-center space-x-3 shadow-lg backdrop-blur-md">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+          <div className="p-4 mb-6 rounded-xl bg-[#f5fff6] border border-[#00855b]/30 text-[#006947] text-sm font-semibold flex items-center space-x-3 shadow-ambient">
+            <CheckCircle2 className="w-5 h-5 text-[#006947] flex-shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
 
         {/* Error Banner */}
         {errorMessage && (
-          <div className="p-4 mb-6 rounded-2xl bg-red-950/80 border border-red-500/40 text-red-300 text-sm font-semibold flex items-center space-x-3 shadow-lg backdrop-blur-md">
-            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
+          <div className="p-4 mb-6 rounded-xl bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#93000a] text-sm font-semibold flex items-center space-x-3 shadow-ambient">
+            <AlertTriangle className="w-5 h-5 text-[#ba1a1a] flex-shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Main 2-Column Grid Layout: Form (Col Span 2) + Live Preview Card (Col Span 1) */}
-        <form onSubmit={handleSubmit(onFinalSubmit)}>
+        {/* Main 2-Column Grid Layout */}
+        <form onSubmit={handleSubmit(onFinalSubmit)} onKeyDown={(e) => {
+          if (e.key === 'Enter' && currentStep < 4) {
+            e.preventDefault();}}}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column — Form Step Cards */}
+            {/* Left Column — Form Step */}
             <div className="lg:col-span-2 space-y-8 min-h-[400px]">
-              {currentStep === 0 && <Step1BasicInfo />}
-              {currentStep === 1 && <Step2PropertyDetails />}
-              {currentStep === 2 && <Step3PricingImages />}
-              {currentStep === 3 && <Step4ReviewPublish onJumpToStep={(stepIdx) => setCurrentStep(stepIdx)} />}
+              {/* Step 0: Basic Info (title, type, sale, description) */}
+              {currentStep === 0 && <Step1BasicInfo mode="basic" />}
 
-              {/* Action Navigation Footer */}
-              <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-card-soft flex items-center justify-between gap-4">
+              {/* Step 1: Location (state, city, locality, address) */}
+              {currentStep === 1 && <Step1BasicInfo mode="location" />}
+
+              {/* Step 2: Amenities (property specs + amenities toggle) */}
+              {currentStep === 2 && <Step2PropertyDetails />}
+
+              {/* Step 3: Media & Pricing */}
+              {currentStep === 3 && <Step3PricingImages />}
+
+              {/* Step 4: AI Preview & Review */}
+              {currentStep === 4 && <Step4ReviewPublish onJumpToStep={(stepIdx) => setCurrentStep(stepIdx)} />}
+
+              {/* Navigation Footer */}
+              <div className="bg-white p-5 sm:p-6 rounded-xl border border-[#e2e7ff] shadow-ambient flex items-center justify-between gap-4">
                 <div>
                   {currentStep > 0 && (
                     <button
                       type="button"
                       onClick={prevStep}
-                      className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold transition cursor-pointer"
+                      className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-lg border border-[#c2c6d6] text-[#424754] hover:bg-[#f2f3ff] text-xs font-bold transition cursor-pointer"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       <span>Previous</span>
                     </button>
                   )}
-                </div>
+                </div>  
 
                 <div className="flex items-center space-x-3">
-                  {currentStep < 3 ? (
+                  {currentStep < 4 ? (
                     <button
                       type="button"
                       onClick={nextStep}
-                      className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/20 transition cursor-pointer"
+                      className="inline-flex items-center space-x-2 px-6 py-3 rounded-lg bg-[#0058be] hover:bg-[#004395] text-white text-xs font-bold shadow-lg shadow-[#0058be]/20 transition cursor-pointer"
                     >
                       <span>Continue</span>
                       <ArrowRight className="w-4 h-4" />
@@ -276,7 +313,7 @@ export default function AddPropertyWizard() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="inline-flex items-center space-x-2 px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-lg shadow-emerald-500/20 transition cursor-pointer disabled:opacity-50"
+                      className="inline-flex items-center space-x-2 px-8 py-3.5 rounded-lg bg-[#006947] hover:bg-[#005236] text-white text-xs font-black shadow-lg shadow-[#006947]/20 transition cursor-pointer disabled:opacity-50"
                     >
                       {isSubmitting ? (
                         <>
@@ -295,7 +332,7 @@ export default function AddPropertyWizard() {
               </div>
             </div>
 
-            {/* Right Column — Sticky Live Listing Preview Card */}
+            {/* Right Column — Sticky Live Preview */}
             <div className="lg:col-span-1">
               <LiveListingPreviewCard />
             </div>

@@ -1,54 +1,48 @@
 import React from 'react';
-import { 
-  Building2, 
-  Home, 
-  CheckCircle2, 
-  Eye, 
-  WalletCards,
-  TrendingUp, 
-  ArrowUpRight, 
-  ArrowDownRight 
-} from 'lucide-react';
-
-const iconMap = {
-  Building2,
-  Home,
-  CheckCircle2,
-  Eye,
-  WalletCards,
-  TrendingUp,
-};
 
 export default function StatCard({ data }) {
-  const Icon = iconMap[data.iconName] || Building2;
+  if (data.isAiInsight) {
+    return (
+      <div className="bg-ai-insight rounded-xl p-md border border-primary-fixed/50 shadow-ambient flex flex-col justify-between h-32 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden">
+        <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary-fixed-dim/20 rounded-full blur-xl"></div>
+        <div className="flex justify-between items-start relative z-10">
+          <span className="font-body-sm text-body-sm text-primary font-semibold uppercase tracking-wider flex items-center gap-1">
+            <span className="material-symbols-outlined text-sm">auto_awesome</span> {data.title}
+          </span>
+          <div className="p-1.5 bg-primary/10 rounded-md text-primary">
+            <span className="material-symbols-outlined text-sm">{data.icon || 'psychology'}</span>
+          </div>
+        </div>
+        <div className="relative z-10">
+          <div className="font-headline-lg text-headline-lg text-primary">{data.value}</div>
+          <div className="text-secondary font-body-sm text-body-sm mt-1">{data.subtitle}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-card-soft hover:shadow-md transition-all duration-300 group">
-      <div className="flex items-center justify-between mb-3">
-        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-50 transition-colors">
-          <Icon className="w-5 h-5" />
-        </div>
-        {data.trend && (
-          <div className={`inline-flex items-center space-x-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
-            data.trendUp ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-          }`}>
-            <span>{data.trend}</span>
-            {data.trendUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-1">
-        <h3 className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+    <div className="bg-surface-container-lowest rounded-xl p-md border border-outline-variant/30 shadow-ambient flex flex-col justify-between h-32 hover:-translate-y-1 transition-transform duration-300">
+      <div className="flex justify-between items-start">
+        <span className="font-body-sm text-body-sm text-secondary font-medium uppercase tracking-wider">
           {data.title}
-        </h3>
-        <div className="text-2xl font-bold text-slate-900 tracking-tight">
-          {data.value}
+        </span>
+        <div className={`p-1.5 rounded-md ${data.iconBg || 'bg-secondary-container/50'} ${data.iconColor || 'text-secondary'}`}>
+          <span className="material-symbols-outlined text-sm">{data.icon || 'home_work'}</span>
         </div>
-        <p className="text-xs text-slate-400">
-          {data.description}
-        </p>
+      </div>
+      <div>
+        <div className="font-headline-lg text-headline-lg text-on-surface">{data.value}</div>
+        {data.trendText ? (
+          <div className="flex items-center gap-1 text-tertiary font-label-md text-label-md mt-1">
+            <span className="material-symbols-outlined text-sm">{data.trendIcon || 'trending_up'}</span>
+            {data.trendText} <span className="text-secondary font-body-sm text-body-sm ml-1 font-normal">{data.trendSubtext}</span>
+          </div>
+        ) : (
+          <div className="text-secondary font-body-sm text-body-sm mt-1">{data.subtitle}</div>
+        )}
       </div>
     </div>
   );
 }
+

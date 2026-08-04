@@ -61,15 +61,35 @@ class BuyerPropertyListView(BaseAPIView):
         if request.query_params.get('max_price'):
             filters['price__lte'] = float(request.query_params.get('max_price'))
 
+        buyer_svc = BuyerService()
+
+        # If sorting by investment score, query all matching without DB sort first then sort in memory
+        db_sort = sort_by if sort_by not in ['investment_score', '-investment_score'] else '-created_at'
+
         results, total_count = self.property_service.list_properties(
             filters=filters,
             search_query=search,
-            sort_by=sort_by,
+            sort_by=db_sort,
             page=page,
             page_size=page_size,
         )
 
-        serialized = PropertyResponseSerializer(results, many=True).data
+        enriched_results = [buyer_svc.enrich_property(p) for p in results]
+
+        if sort_by == '-investment_score':
+            enriched_results.sort(key=lambda x: x.get('investment_score', 0), reverse=True)
+        elif sort_by == 'investment_score':
+            enriched_results.sort(key=lambda x: x.get('investment_score', 0))
+
+        min_score = request.query_params.get('min_investment_score')
+        if min_score:
+            try:
+                min_score_val = int(min_score)
+                enriched_results = [p for p in enriched_results if p.get('investment_score', 0) >= min_score_val]
+            except ValueError:
+                pass
+
+        serialized = PropertyResponseSerializer(enriched_results, many=True).data
         return paginated_response(
             results=serialized,
             count=total_count,
@@ -137,7 +157,7 @@ class WishlistDeleteView(BaseAPIView):
         self.service = BuyerService()
 
     def delete(self, request, property_id):
-        res = self.service.toggle_wishlist(user_id=str(request.user.id), property_id=property_id)
+        res = self.service.remove_wishlist(user_id=str(request.user.id), property_id=property_id)
         return self.success_response(data=res, message="Property removed from wishlist.")
 
 
