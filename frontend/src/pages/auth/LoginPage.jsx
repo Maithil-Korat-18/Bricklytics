@@ -33,12 +33,22 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+
+    if (!formData.email.trim()) {
+      setErrorMessage('Please enter your email address.');
+      return;
+    }
+    if (!formData.password) {
+      setErrorMessage('Please enter your password.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await login(formData.email, formData.password);
       showSuccess(res.message || 'Welcome back!');
-      
+
       const userRole = res.user?.role?.toLowerCase();
       if (userRole === 'seller') {
         navigate(ROUTES.SELLER_DASHBOARD, { replace: true });
@@ -50,7 +60,6 @@ export default function LoginPage() {
       setErrorMessage(msg);
       showError(msg);
 
-      // If email not verified, redirect to verification page
       if (msg.toLowerCase().includes('not verified')) {
         setTimeout(() => {
           navigate(ROUTES.VERIFY_EMAIL, { state: { email: formData.email } });
@@ -60,6 +69,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

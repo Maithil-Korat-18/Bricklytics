@@ -131,18 +131,108 @@ class BuyerService(BaseService):
 
     def compare_properties(self, property_ids: list[str]) -> list[dict]:
         self._log_operation('compare_properties', count=len(property_ids))
-        if len(property_ids) > 4:
-            raise ValidationError("You can compare up to 4 properties at a time.")
+        if len(property_ids) > 8:
+            raise ValidationError("You can compare up to 8 properties at a time.")
+
         
         results = []
         for pid in property_ids:
             try:
                 pdict = self.property_repo.find_by_id(pid)
                 if pdict.get('status') == 'active':
-                    results.append(pdict)
+                    results.append(self.enrich_property(pdict))
             except Exception:
                 continue
         return results
+
+    def get_better_alternatives(self, property_id: str, limit: int = 3) -> list[dict]:
+        """
+        Find genuinely better alternatives prioritized strictly by:
+        1. Budget / Price Range match
+        2. BHK match
+        3. Locality / Area match
+        4. Higher AI Investment Score than target property
+        """
+        self._log_operation('get_better_alternatives', property_id=property_id)
+        try:
+            target = self.property_repo.find_by_id(property_id)
+        except Exception:
+            return []
+
+        if not target or target.get('status') != 'active':
+            return []
+
+        target_score = int(target.get('investment_score') or 0)
+        target_bhk = int(target.get('bhk') or 2)
+        target_type = target.get('property_type') or 'apartment'
+        target_price = float(target.get('price') or 0)
+        target_locality = str(target.get('locality') or '').strip().lower()
+
+        # Query candidates in same property type
+        filters = {
+            'status': 'active',
+            'property_type': target_type,
+        }
+        candidates, _ = self.property_repo.filter_properties(
+            filters=filters, limit=150, sort_by='-investment_score'
+        )
+
+        scored_alternatives = []
+        for c in candidates:
+            cid = str(c.get('id') or '')
+            if cid == str(property_id):
+                continue  # skip target property itself
+
+            enriched = self.enrich_property(c)
+            c_score = int(enriched.get('investment_score') or 0)
+            c_price = float(enriched.get('price') or 0)
+            c_bhk = int(enriched.get('bhk') or 0)
+            c_locality = str(enriched.get('locality') or '').strip().lower()
+
+            # Must have a strictly higher AI Investment Score
+            if c_score <= target_score:
+                continue
+
+            # Budget check: within ±25% price range
+            budget_ratio = (c_price / target_price) if target_price > 0 else 1.0
+            if budget_ratio < 0.70 or budget_ratio > 1.30:
+                continue
+
+            # BHK match: same BHK or ±1 BHK
+            bhk_diff = abs(c_bhk - target_bhk)
+            if bhk_diff > 1:
+                continue
+
+            # Locality match
+            locality_match = (
+                c_locality == target_locality
+                or target_locality in c_locality
+                or c_locality in target_locality
+            )
+
+            # Prioritization scoring (Locality 45%, Budget 25%, BHK 15%, Score Gain 15%):
+            locality_score = 1.0 if locality_match else 0.25
+
+            price_delta_pct = abs(c_price - target_price) / max(target_price, 1)
+            budget_score = max(0.0, 1.0 - price_delta_pct)
+
+            bhk_score = 1.0 if c_bhk == target_bhk else 0.6
+            score_gain = (c_score - target_score) / 100.0
+
+            composite_rank = (
+                locality_score * 0.45 +
+                budget_score * 0.25 +
+                bhk_score * 0.15 +
+                score_gain * 0.15
+            )
+
+            scored_alternatives.append((composite_rank, enriched))
+
+
+        # Sort by composite rank descending, take top limit
+        scored_alternatives.sort(key=lambda x: x[0], reverse=True)
+        return [item for _, item in scored_alternatives[:limit]]
+
 
     def calculate_investment_score(self, prop: dict) -> int:
         from buyer.services.investment_service import InvestmentScoreService
@@ -154,14 +244,31 @@ class BuyerService(BaseService):
         return InvestmentScoreService().calculate(prop)
 
     def get_trending_locations(self) -> list[dict]:
-        all_props, _ = self.property_repo.filter_properties(filters={'status': 'active'}, limit=500)
-        location_counts = {}
-        for p in all_props:
-            loc = p.get('locality') or 'South Bopal'
-            location_counts[loc] = location_counts.get(loc, 0) + 1
+        try:
+            from seller.models.property import Property
+            pipeline = [
+                {'$match': {'status': 'active'}},
+                {'$group': {'_id': '$locality', 'count': {'$sum': 1}}},
+                {'$sort': {'count': -1}},
+                {'$limit': 5}
+            ]
+            aggregated = list(Property.objects.aggregate(pipeline))
+            if aggregated:
+                base_score = 98
+                results = []
+                for item in aggregated:
+                    loc = item.get('_id') or 'South Bopal'
+                    results.append({
+                        'name': f"{loc}, Ahmedabad" if 'Ahmedabad' not in str(loc) else str(loc),
+                        'score': min(99, max(75, base_score)),
+                        'count': item.get('count', 1)
+                    })
+                    base_score -= 4
+                return results
+        except Exception as e:
+            logger.warning("Error fetching trending locations aggregate: %s", e)
 
-        # Fallback defaults for Ahmedabad if DB properties are sparse
-        default_locations = [
+        return [
             {'name': 'South Bopal, Ahmedabad', 'score': 98},
             {'name': 'Satellite, Ahmedabad', 'score': 94},
             {'name': 'Science City, Ahmedabad', 'score': 91},
@@ -169,21 +276,6 @@ class BuyerService(BaseService):
             {'name': 'Bodakdev, Ahmedabad', 'score': 85},
         ]
 
-        if not location_counts:
-            return default_locations
-
-        sorted_locs = sorted(location_counts.items(), key=lambda x: x[1], reverse=True)
-        results = []
-        base_score = 98
-        for loc, count in sorted_locs[:5]:
-            results.append({
-                'name': f"{loc}, Ahmedabad" if 'Ahmedabad' not in loc else loc,
-                'score': min(99, max(75, base_score)),
-                'count': count
-            })
-            base_score -= 4
-
-        return results if results else default_locations
 
     def get_dashboard(self, user) -> dict:
         user_id = str(user.id)
@@ -253,4 +345,3 @@ class BuyerService(BaseService):
             'trending_locations': trending_locations,
             'activities': activities,
         }
-

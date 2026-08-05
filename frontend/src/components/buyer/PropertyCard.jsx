@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, MapPin, Bed, Bath, Maximize2, TrendingUp, Sparkles } from 'lucide-react';
-import { buyerApi } from '../../services/buyerApi';
+import { Check, Heart, MapPin, Bed, Bath, Maximize2, TrendingUp, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { useToast } from '../../components/common/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { getPropertyDetailsPath } from '../../constants/routes';
 import { getPropertyMediaUrl } from '../../utils/propertyMedia';
+import { useWishlist } from '../../contexts/WishlistContext';
+import { isComparePropertySelected, toggleComparePropertyId } from '../../utils/compareSelection';
 
-export default function PropertyCard({ property, isFavoriteInitial = false, onFavoriteToggle }) {
+export default function PropertyCard({ property, isFavoriteInitial = false, onFavoriteToggle, showCompare = false }) {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { showSuccess, showError } = useToast();
-  const [isFavorite, setIsFavorite] = useState(isFavoriteInitial);
+  const { showSuccess, showError, showInfo } = useToast();
   const [favLoading, setFavLoading] = useState(false);
+  const [isCompared, setIsCompared] = useState(() => isComparePropertySelected(property.id));
+  const { favoriteIds, loading: wishlistLoading, toggleFavorite } = useWishlist();
 
-  useEffect(() => {
-    setIsFavorite(isFavoriteInitial);
-  }, [isFavoriteInitial]);
+  const isFavorite = wishlistLoading ? isFavoriteInitial : favoriteIds.has(String(property.id));
 
   const coverImage = property.images?.find((img) => img.is_cover)?.url ||
     property.images?.[0]?.url ||
@@ -39,10 +39,9 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
 
     setFavLoading(true);
     try {
-      const res = await buyerApi.toggleWishlist(property.id);
-      setIsFavorite(res.data?.in_wishlist);
+      const res = await toggleFavorite(property.id);
       showSuccess(res.message);
-      if (onFavoriteToggle) onFavoriteToggle(property.id, res.data?.in_wishlist);
+      if (onFavoriteToggle) onFavoriteToggle(property.id, res.inWishlist);
     } catch (err) {
       showError('Failed to update wishlist.');
     } finally {
@@ -50,11 +49,29 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
     }
   };
 
+  const handleCompareClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const result = toggleComparePropertyId(property.id);
+    if (result.limitReached) {
+      showError('Maximum 8 properties can be added to compare.');
+    } else {
+      setIsCompared(result.isSelected);
+      if (result.isSelected) {
+        showSuccess(`Added "${property.title || 'Property'}" to compare list!`);
+      } else {
+        if (showInfo) showInfo(`Removed "${property.title || 'Property'}" from compare list.`);
+        else showSuccess(`Removed "${property.title || 'Property'}" from compare list.`);
+      }
+      window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
+    }
+  };
+
   const score = property.investment_score || 92;
   const appreciation = property.appreciation_rate || '+14.5% Exp. Appr.';
   const aiFairPrice = property.ai_fair_price || (property.price ? property.price * 1.03 : 0);
   const propertyIdCode = `BRL-${(property.id || '9284').slice(-4).toUpperCase()}`;
-  const healthDesc = property.health_description || "AI Health Score indicates strong fundamentals and undervalued positioning.";
+  const investmentDesc = property.investment_explanation || property.investment_description || "AI Investment Score is calculated from valuation, appreciation, locality, connectivity, property profile, and amenity value.";
 
   return (
     <article 
@@ -123,7 +140,7 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
           </div>
         </div>
 
-        {/* AI Health & Price Box */}
+        {/* AI Investment Score & Price Box */}
         <div className="mt-auto bg-blue-50/50 rounded-xl p-3.5 border border-blue-100/80 space-y-3">
           {/* Price Comparison */}
           <div className="flex justify-between items-end">
@@ -150,10 +167,21 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
               {score}
             </div>
             <p className="text-[11px] font-medium text-slate-600 leading-snug">
-              {healthDesc}
+              {investmentDesc}
             </p>
           </div>
         </div>
+
+        {showCompare && (
+          <button
+            type="button"
+            onClick={handleCompareClick}
+            className={`w-full inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${isCompared ? 'border-tertiary bg-tertiary text-white hover:bg-tertiary/90' : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-white'}`}
+          >
+            {isCompared ? <Check className="w-4 h-4" /> : <SlidersHorizontal className="w-4 h-4" />}
+            {isCompared ? 'Added to Compare' : 'Add to Compare'}
+          </button>
+        )}
       </div>
     </article>
   );

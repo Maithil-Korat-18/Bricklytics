@@ -108,4 +108,10 @@ export const propertyApi = {
     const response = await apiClient.get('/seller/analytics/');
     return response.data;
   },
+
+  replyToInquiry: async (inquiryId, replyText) => {
+    const response = await apiClient.post(`/seller/inquiries/${inquiryId}/reply/`, { reply: replyText });
+    return response.data;
+  },
 };
+

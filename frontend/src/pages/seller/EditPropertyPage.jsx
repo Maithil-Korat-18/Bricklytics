@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { propertySchema } from '../../validation/propertySchema';
@@ -8,6 +8,7 @@ import { useToast } from '../../components/common/ToastContext';
 
 import PageHeader from '../../components/common/PageHeader';
 import ContentContainer from '../../components/common/ContentContainer';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 import LiveListingPreviewCard from '../../components/seller/wizard/LiveListingPreviewCard';
 
 import Step1BasicInfo from '../../components/seller/wizard/Step1BasicInfo';
@@ -16,6 +17,15 @@ import Step3PricingImages from '../../components/seller/wizard/Step3PricingImage
 
 import { CheckCircle, AlertTriangle, RefreshCw, Trash2, Star } from 'lucide-react';
 import { getPropertyMediaUrl } from '../../utils/propertyMedia';
+
+
+const AHMEDABAD_LOCALITIES = [
+  'South Bopal', 'Satellite', 'Bodakdev', 'Prahlad Nagar', 'Science City',
+  'Vastrapur', 'Thaltej', 'SG Highway', 'Sindhu Bhavan Road', 'Ambli',
+  'Shela', 'Gota', 'Chandkheda', 'Naranpura', 'Paldi', 'CG Road',
+  'Maninagar', 'Motera', 'Navrangpura', 'Ellisbridge', 'Memnagar',
+  'Sola', 'Vatva', 'Naroda', 'Nikol', 'Shahibaug',
+];
 
 const propertyTypeToFormValue = (propertyType) => {
   switch (propertyType) {
@@ -39,20 +49,84 @@ const propertyTypeToApiValue = (propertyType) => {
 export default function EditPropertyPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { showSuccess, showError } = useToast();
+
+  const searchParams = new URLSearchParams(location.search);
+  const returnTo =
+    location.state?.from ||
+    searchParams.get('from') ||
+    '/seller/dashboard';
+
+  const returnLabel =
+    location.state?.fromLabel ||
+    (returnTo.includes('manage') ? 'Manage Properties' : 'Seller Dashboard');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [propertyData, setPropertyData] = useState(null);
+  const [soldModalOpen, setSoldModalOpen] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const confirmSoldToggle = async () => {
+    if (!propertyData) return;
+    setUpdatingStatus(true);
+    const nextStatus = propertyData.status === 'sold' ? 'active' : 'sold';
+    try {
+      const res = await propertyApi.updatePropertyStatus(id, nextStatus);
+      if (res.success || res.data) {
+        showSuccess(
+          nextStatus === 'sold'
+            ? `Property "${propertyData.title}" marked as SOLD.`
+            : `Property "${propertyData.title}" reactivated as UNSOLD/ACTIVE.`
+        );
+        setPropertyData((prev) => (prev ? { ...prev, status: nextStatus } : prev));
+      } else {
+        throw new Error(res.message || 'Failed to update property status.');
+      }
+    } catch (err) {
+      showError(err.message || 'Error updating status.');
+    } finally {
+      setUpdatingStatus(false);
+      setSoldModalOpen(false);
+    }
+  };
+
+  // Pre-loaded localities so the select has options BEFORE reset() fires
+  const [loadedLocalities, setLoadedLocalities] = useState(AHMEDABAD_LOCALITIES);
+  const localitiesReady = useRef(false);
+
 
   const methods = useForm({
     resolver: zodResolver(propertySchema),
     mode: 'onTouched',
   });
 
+  // Step 1: Fetch localities from API (before property data if possible)
   useEffect(() => {
+    async function fetchLocalities() {
+      try {
+        const res = await propertyApi.getAhmedabadLocations();
+        if (res.success && res.data?.locations?.length > 0) {
+          const names = res.data.locations.map((loc) => loc.name);
+          const merged = Array.from(new Set([...names, ...AHMEDABAD_LOCALITIES]));
+          setLoadedLocalities(merged);
+        }
+      } catch {
+        // Fall back to static list – already set as default
+      } finally {
+        localitiesReady.current = true;
+      }
+    }
+    fetchLocalities();
+  }, []);
+
+  // Step 2: Fetch property then reset form — wait for localities to be ready
+  useEffect(() => {
+    if (!id) return;
+
     async function fetchProperty() {
       setLoading(true);
       try {
@@ -62,6 +136,21 @@ export default function EditPropertyPage() {
           setPropertyData(p);
 
           const isResale = p.sale_type === 'resale';
+
+          // Ensure localities are loaded first so the <select> has matching options
+          const waitForLocalities = () =>
+            new Promise((resolve) => {
+              const check = () => {
+                if (localitiesReady.current) {
+                  resolve();
+                } else {
+                  setTimeout(check, 50);
+                }
+              };
+              check();
+            });
+
+          await waitForLocalities();
 
           methods.reset({
             title: p.title || '',
@@ -110,7 +199,10 @@ export default function EditPropertyPage() {
             amenities: (p.amenities || []).map((a) => (typeof a === 'string' ? a : a.name)),
             nearbyPlaces: p.nearby_places || [],
             images: (p.images || []).map((img) => img.url),
-            coverIndex: (p.images || []).findIndex((img) => img.is_cover) >= 0 ? (p.images || []).findIndex((img) => img.is_cover) : 0,
+            coverIndex:
+              (p.images || []).findIndex((img) => img.is_cover) >= 0
+                ? (p.images || []).findIndex((img) => img.is_cover)
+                : 0,
           });
         }
       } catch (err) {
@@ -120,9 +212,7 @@ export default function EditPropertyPage() {
       }
     }
 
-    if (id) {
-      fetchProperty();
-    }
+    fetchProperty();
   }, [id, methods, showError]);
 
   const onSubmit = async (data) => {
@@ -132,6 +222,23 @@ export default function EditPropertyPage() {
 
     try {
       const isResale = data.listingType === 'Resale Property' || data.saleType === 'resale';
+      const newPrice = Number(data.expectedPrice);
+      const newArea = Number(data.carpetArea);
+
+      // Task 2 – AI Determinism:
+      // Only recalculate rate_per_sqft if the user changed price OR area.
+      // Otherwise keep the stored value so the prediction fingerprint stays stable.
+      const storedPrice = propertyData?.price;
+      const storedArea = propertyData?.area_sqft;
+      const priceChanged = newPrice !== storedPrice;
+      const areaChanged = newArea !== storedArea;
+
+      let ratePerSqft;
+      if ((priceChanged || areaChanged) && newPrice && newArea) {
+        ratePerSqft = Math.round(newPrice / newArea);
+      } else {
+        ratePerSqft = propertyData?.rate_per_sqft || (newPrice && newArea ? Math.round(newPrice / newArea) : 0);
+      }
 
       const payload = {
         title: data.title,
@@ -140,19 +247,24 @@ export default function EditPropertyPage() {
         listing_type: 'sell',
         sale_type: isResale ? 'resale' : 'new',
         reconstruction_needed: isResale ? data.reconstructionNeeded : '',
-        price: Number(data.expectedPrice),
-        rate_per_sqft: Number(data.expectedPrice) && Number(data.carpetArea) ? Math.round(Number(data.expectedPrice) / Number(data.carpetArea)) : 0,
+        price: newPrice,
+        rate_per_sqft: ratePerSqft,
         bhk: data.bhk ? Number(data.bhk) : 1,
         bedrooms: data.bedrooms ? Number(data.bedrooms) : 0,
         bathrooms: data.bathrooms ? Number(data.bathrooms) : 0,
         balconies: data.balconies ? Number(data.balconies) : 0,
-        area_sqft: Number(data.carpetArea),
+        area_sqft: newArea,
         built_up_area: data.builtUpArea ? Number(data.builtUpArea) : null,
         super_built_up_area: data.superBuiltUpArea ? Number(data.superBuiltUpArea) : null,
         floor_number: data.floorNumber ? Number(data.floorNumber) : 1,
         total_floors: data.totalFloors ? Number(data.totalFloors) : 1,
         units_per_floor: data.unitsPerFloor ? Number(data.unitsPerFloor) : 0,
-        total_units: data.totalFloors && data.unitsPerFloor ? Number(data.totalFloors) * Number(data.unitsPerFloor) : (data.totalUnits ? Number(data.totalUnits) : 0),
+        total_units:
+          data.totalFloors && data.unitsPerFloor
+            ? Number(data.totalFloors) * Number(data.unitsPerFloor)
+            : data.totalUnits
+            ? Number(data.totalUnits)
+            : 0,
         units_sold: data.unitsSold ? Number(data.unitsSold) : 0,
         sample_house_ready: data.sampleHouseReady === true,
         layout_type: data.layoutType || '',
@@ -170,8 +282,8 @@ export default function EditPropertyPage() {
         maintenance_charges: data.maintenanceCharges ? Number(data.maintenanceCharges) : 0,
         booking_amount: data.bookingAmount ? Number(data.bookingAmount) : 0,
 
-        builderName: data.builderName || '',
-        projectName: data.projectName || '',
+        builder_name: data.builderName || '',
+        project_name: data.projectName || '',
         rera_number: data.reraNumber || '',
         possession_status: data.possessionStatus || 'Ready',
         possession_date: data.possessionDate || '',
@@ -184,9 +296,14 @@ export default function EditPropertyPage() {
       if (res.success) {
         const newFiles = data.rawImageFiles || [];
         if (newFiles.length) await propertyApi.uploadImages(id, newFiles);
-        setSuccessMessage('Property updated successfully!');
+
+        setSuccessMessage(`Property updated successfully! Redirecting to ${returnLabel}...`);
         showSuccess('Property updated successfully!');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        setTimeout(() => {
+          navigate(returnTo);
+        }, 1200);
       }
     } catch (err) {
       let msg = err.response?.data?.message || 'Failed to update property.';
@@ -243,10 +360,27 @@ export default function EditPropertyPage() {
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
         <ContentContainer>
-          <PageHeader
-            title={`Edit Property: ${propertyData?.title || `#${id}`}`}
-            description="Update listing information, unit availability, and pricing."
-          />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <PageHeader
+              title={`Edit Property: ${propertyData?.title || `#${id}`}`}
+              description="Update listing information, unit availability, and pricing."
+            />
+            {propertyData && (
+              <button
+                type="button"
+                onClick={() => setSoldModalOpen(true)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 cursor-pointer shrink-0 ${
+                  propertyData.status === 'sold'
+                    ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                }`}
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>{propertyData.status === 'sold' ? 'Mark as Unsold (Reactivate)' : 'Mark as Sold'}</span>
+              </button>
+            )}
+          </div>
+
 
           {/* Success Banner */}
           {successMessage && (
@@ -301,8 +435,9 @@ export default function EditPropertyPage() {
           {/* Main 2-Column Form Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
+              {/* Pass pre-loaded localities so select is populated before reset fires */}
               <Step1BasicInfo mode="basic" />
-              <Step1BasicInfo mode="location" />
+              <Step1BasicInfo mode="location" preloadedLocalities={loadedLocalities} />
               <Step2PropertyDetails />
               <Step3PricingImages />
             </div>
@@ -315,11 +450,39 @@ export default function EditPropertyPage() {
 
         <div className="sticky bottom-0 z-40 border-t border-[#e2e7ff] bg-white/90 p-4 backdrop-blur-md">
           <div className="mx-auto flex max-w-7xl justify-end gap-3">
-            <button type="button" onClick={() => navigate(-1)} className="rounded-xl border border-[#c2c6d6] px-5 py-2.5 text-xs font-semibold text-[#424754] hover:bg-[#f2f3ff]">Cancel</button>
-            <button type="submit" disabled={saving} className="rounded-xl bg-[#0058be] px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#004395] disabled:opacity-50">{saving ? 'Updating...' : 'Update Property'}</button>
+            <button
+              type="button"
+              onClick={() => navigate(returnTo)}
+              className="rounded-xl border border-[#c2c6d6] px-5 py-2.5 text-xs font-semibold text-[#424754] hover:bg-[#f2f3ff]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-xl bg-[#0058be] px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#004395] disabled:opacity-50"
+            >
+              {saving ? 'Updating...' : 'Update Property'}
+            </button>
           </div>
         </div>
       </form>
+
+      {/* Sold/Unsold Status Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={soldModalOpen}
+        title={propertyData?.status === 'sold' ? 'Reactivate Property (Mark Unsold)' : 'Mark Property as Sold'}
+        message={
+          propertyData?.status === 'sold'
+            ? `Are you sure you want to reactivate "${propertyData?.title}"? It will become visible to buyers again.`
+            : `Are you sure you want to mark "${propertyData?.title}" as SOLD? It will be immediately hidden from buyers on the platform.`
+        }
+        confirmText={propertyData?.status === 'sold' ? 'Reactivate' : 'Confirm Sold'}
+        confirmVariant={propertyData?.status === 'sold' ? 'primary' : 'warning'}
+        loading={updatingStatus}
+        onConfirm={confirmSoldToggle}
+        onClose={() => setSoldModalOpen(false)}
+      />
     </FormProvider>
   );
 }

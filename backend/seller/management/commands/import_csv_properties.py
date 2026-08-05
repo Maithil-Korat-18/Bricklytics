@@ -13,16 +13,21 @@ from seller.models.property import Property, PropertyAmenity
 
 logger = logging.getLogger('bricklytics')
 
-CSV_PATH = os.path.join(settings.BASE_DIR.parent, 'property_location_amenities.csv')
+POSSIBLE_CSV_PATHS = [
+    os.path.join(settings.BASE_DIR.parent, 'property_location_amenities_with_type.csv'),
+    os.path.join(settings.BASE_DIR.parent, 'property_location_amenities.csv'),
+    os.path.join(settings.BASE_DIR, 'property_location_amenities_with_type.csv'),
+    os.path.join(settings.BASE_DIR, 'property_location_amenities.csv'),
+]
 
 
 class Command(BaseCommand):
-    help = 'Import properties from property_location_amenities.csv into MongoDB'
+    help = 'Import properties from property_location_amenities_with_type.csv into MongoDB'
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--limit', type=int, default=500,
-            help='Max number of rows to import (default: 500)'
+            '--limit', type=int, default=1000,
+            help='Max number of rows to import (default: 1000)'
         )
         parser.add_argument(
             '--clear', action='store_true',
@@ -33,29 +38,41 @@ class Command(BaseCommand):
         limit = options['limit']
         clear = options['clear']
 
-        if not os.path.exists(CSV_PATH):
-            self.stderr.write(self.style.ERROR(f'CSV file not found at: {CSV_PATH}'))
+        csv_path = None
+        for path in POSSIBLE_CSV_PATHS:
+            if os.path.exists(path):
+                csv_path = path
+                break
+
+        if not csv_path:
+            self.stderr.write(self.style.ERROR(f'No CSV dataset file found at {POSSIBLE_CSV_PATHS[0]}'))
             return
 
         if clear:
-            deleted = Property.objects(project_name='CSV_IMPORT').delete()
-            self.stdout.write(self.style.WARNING(f'Cleared {deleted} previously imported CSV properties.'))
+            deleted = Property.objects(
+                __raw__={'$or': [
+                    {'is_dataset_import': True},
+                    {'project_name': 'CSV_IMPORT'},
+                    {'seller_name': 'Bricklytics Listings'},
+                ]}
+            ).delete()
+            self.stdout.write(self.style.WARNING(f'Cleared {deleted} previously imported CSV dataset properties.'))
 
         # Check existing count to avoid re-import
-        existing = Property.objects(project_name='CSV_IMPORT').count()
+        existing = Property.objects(is_dataset_import=True).count()
         if existing > 0 and not clear:
             self.stdout.write(self.style.WARNING(
                 f'{existing} CSV properties already imported. Use --clear to reimport.'
             ))
             return
 
-        self.stdout.write(f'Reading CSV from: {CSV_PATH}')
+        self.stdout.write(f'Reading CSV from: {csv_path}')
 
         imported = 0
         skipped = 0
         errors = 0
 
-        with open(CSV_PATH, 'r', encoding='utf-8-sig') as f:
+        with open(csv_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
 
             for row in reader:
@@ -80,6 +97,14 @@ class Command(BaseCommand):
                     location = (row.get('location') or 'Ahmedabad').strip().title()
                     matched_name = (row.get('matched map name') or location).strip().title()
 
+                    raw_type = str(row.get('property type') or row.get('property_type') or 'apartment').lower().strip()
+                    if 'villa' in raw_type or 'house' in raw_type:
+                        p_type = 'villa'
+                    elif 'plot' in raw_type or 'land' in raw_type:
+                        p_type = 'plot'
+                    else:
+                        p_type = 'apartment'
+
                     # Build amenities from nearby data
                     amenities = []
                     nearby_fields = {
@@ -100,10 +125,10 @@ class Command(BaseCommand):
 
                     prop = Property(
                         title=property_name,
-                        description=f'Premium {bhk} BHK apartment in {property_name}, {matched_name}, Ahmedabad. '
+                        description=f'Premium {bhk} BHK property in {property_name}, {matched_name}, Ahmedabad. '
                                     f'Area: {area_sqft} sqft at ₹{rate_per_sqft}/sqft. '
                                     f'Located near top schools, hospitals, and public transport.',
-                        property_type='apartment',
+                        property_type=p_type,
                         listing_type='sell',
                         sale_type='new' if price_cr < 1.5 else 'resale',
                         price=price_inr,
@@ -127,7 +152,8 @@ class Command(BaseCommand):
                         latitude=lat,
                         longitude=lon,
                         builder_name='Verified Builder',
-                        project_name='CSV_IMPORT',  # Tag for identification
+                        project_name=property_name,  # Real society name instead of CSV_IMPORT
+                        is_dataset_import=True,
                         rera_number=f'PR/GJ/AHD/2025/{10000 + imported}',
                         possession_status='Ready',
                         seller_name='Bricklytics Listings',
@@ -146,10 +172,12 @@ class Command(BaseCommand):
                         self.stdout.write(f'  Imported {imported} properties...')
 
                 except Exception as e:
+
                     errors += 1
                     if errors <= 5:
                         self.stderr.write(f'  Error on row: {e}')
 
         self.stdout.write(self.style.SUCCESS(
-            f'\n✅ Import complete: {imported} imported, {skipped} skipped, {errors} errors.'
+            f'\nImport complete: {imported} imported, {skipped} skipped, {errors} errors.'
         ))
+

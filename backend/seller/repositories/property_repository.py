@@ -25,9 +25,24 @@ class PropertyRepository(BaseRepository):
             qs = self.model.active()
 
             if filters:
-                clean_filters = {k: v for k, v in filters.items() if v is not None}
+                clean_filters = {}
+                for k, v in filters.items():
+                    if v is None or v == '':
+                        continue
+                    if k == 'property_type':
+                        val = str(v).lower().strip()
+                        if val in ['villa', 'house', 'villa / house']:
+                            clean_filters['property_type__in'] = ['villa', 'house', 'Villa / House', 'villa / house']
+                        elif val in ['apartment', 'flat', 'flat / apartment']:
+                            clean_filters['property_type__in'] = ['apartment', 'flat', 'Flat / Apartment', 'flat / apartment']
+                        else:
+                            clean_filters[k] = v
+                    else:
+                        clean_filters[k] = v
+
                 if clean_filters:
                     qs = qs.filter(**clean_filters)
+
 
             if search_query:
                 qs = qs.filter(title__icontains=search_query)

@@ -6,12 +6,29 @@ import io
 from PIL import Image
 from django.test import TestCase
 from rest_framework.test import APIClient
+from accounts.models.user import User
+from accounts.middleware.jwt_auth import generate_jwt_token
 from seller.models.property import Property
 
 
 class PropertyModuleTest(TestCase):
     def setUp(self):
         self.client = APIClient()
+        User.objects.filter(email="test_seller_module@example.com").delete()
+        self.seller = User(
+            first_name="Test",
+            last_name="Seller",
+            email="test_seller_module@example.com",
+            phone_number="9998887776",
+            password_hash="hash",
+            role="seller",
+            is_active=True,
+            is_verified=True,
+        )
+        self.seller.save()
+        token = generate_jwt_token(self.seller)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+
         self.valid_payload = {
             "title": "Luxury Modern Villa",
             "description": "Spacious 4 BHK Villa with private garden",
@@ -33,6 +50,7 @@ class PropertyModuleTest(TestCase):
 
     def tearDown(self):
         Property.objects.all().delete()
+        User.objects.filter(email="test_seller_module@example.com").delete()
 
     def test_create_property_success(self):
         response = self.client.post('/api/seller/properties/', self.valid_payload, format='json')

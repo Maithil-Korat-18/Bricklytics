@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { Plus, RefreshCw, BarChart3, Building2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Plus, RefreshCw, TrendingUp, Eye, MessageSquare, Award, Crown, Sparkles, BarChart3, ArrowRight } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import ActivityTimeline from '../components/dashboard/ActivityTimeline';
 import PropertyTable from '../components/dashboard/PropertyTable';
 import StatCard from '../components/dashboard/StatCard';
 import QuickActionCard from '../components/dashboard/QuickActionCard';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import { useToast } from '../components/common/ToastContext';
-import { ROUTES } from '../constants/routes';
+import { ROUTES, getEditPropertyPath, getSellerPropertyDetailsPath } from '../constants/routes';
 import { useSellerDashboard } from '../hooks/useSellerDashboard';
 import { propertyApi } from '../services/propertyApi';
+import { getPropertyMediaUrl } from '../utils/propertyMedia';
 
 function DashboardSkeleton() {
   return (
@@ -25,8 +26,124 @@ function DashboardSkeleton() {
           <div key={index} className="h-28 rounded-2xl border border-slate-200/80 bg-white" />
         ))}
       </div>
+      <div className="h-72 rounded-2xl border border-slate-200/80 bg-white" />
       <div className="h-96 rounded-2xl border border-slate-200/80 bg-white" />
-      <div className="h-96 rounded-2xl border border-slate-200/80 bg-white" />
+    </div>
+  );
+}
+
+const formatPrice = (value) => {
+  const val = Number(value || 0);
+  if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
+  if (val >= 100000) return `₹${(val / 100000).toFixed(2)} L`;
+  return `₹${val.toLocaleString('en-IN')}`;
+};
+
+function TopPerformingCard({ property, rank }) {
+  const rankConfig = {
+    1: { badge: 'bg-gradient-to-r from-amber-400 to-yellow-500', icon: Crown, label: '#1 Top Property', text: 'text-amber-700' },
+    2: { badge: 'bg-gradient-to-r from-slate-300 to-slate-400', icon: Award, label: '#2 Runner Up', text: 'text-slate-600' },
+    3: { badge: 'bg-gradient-to-r from-amber-600 to-orange-500', icon: Award, label: '#3 Best Performer', text: 'text-amber-800' },
+  }[rank] || { badge: 'bg-slate-100', icon: TrendingUp, label: `#${rank}`, text: 'text-slate-600' };
+
+  const RankIcon = rankConfig.icon;
+  const coverImage = property.images?.find((img) => img.is_cover)?.url || property.images?.[0]?.url;
+  const score = property.investment_score;
+
+  return (
+    <div className="group relative flex gap-4 p-4 bg-white rounded-xl border border-slate-200/80 hover:border-blue-200 hover:shadow-md transition-all duration-200">
+      {/* Rank Badge */}
+      <div className={`absolute -top-2 -left-2 w-7 h-7 rounded-full ${rankConfig.badge} flex items-center justify-center shadow-md`}>
+        <RankIcon className="w-3.5 h-3.5 text-white" />
+      </div>
+
+      {/* Thumbnail */}
+      {coverImage ? (
+        <img
+          src={getPropertyMediaUrl(coverImage)}
+          alt={property.title}
+          className="w-16 h-16 rounded-xl object-cover ring-1 ring-slate-200 flex-shrink-0"
+        />
+      ) : (
+        <div className="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+          <BarChart3 className="w-7 h-7 text-blue-400" />
+        </div>
+      )}
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-sm text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+          {property.title || 'Property'}
+        </p>
+        <p className="text-xs text-slate-400 truncate">{property.locality || property.city || 'Ahmedabad'}</p>
+
+        <div className="mt-1.5 flex items-center gap-3 text-xs text-slate-600">
+          <span className="flex items-center gap-1 font-semibold text-slate-700">
+            <Eye className="w-3.5 h-3.5 text-blue-400" />
+            {property.view_count || 0} Views
+          </span>
+          <span className="flex items-center gap-1 font-semibold text-slate-700">
+            <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+            {property.inquiry_count || 0} Inquiries
+          </span>
+          {score != null && (
+            <span className="flex items-center gap-1 font-semibold text-emerald-700">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+              {score}/100
+            </span>
+          )}
+        </div>
+
+        <div className="mt-1 flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-900">{formatPrice(property.price)}</span>
+          <div className="flex items-center gap-1.5">
+            <Link
+              to={getSellerPropertyDetailsPath(property.id)}
+              className="text-[10px] font-bold text-blue-600 hover:underline"
+            >
+              View
+            </Link>
+            <span className="text-slate-200">|</span>
+            <Link
+              to={getEditPropertyPath(property.id)}
+              className="text-[10px] font-bold text-slate-500 hover:underline"
+            >
+              Edit
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HighlightStatCard({ title, property, icon: Icon, colorClass }) {
+  if (!property) return null;
+  const coverImage = property.images?.find((img) => img.is_cover)?.url || property.images?.[0]?.url;
+
+  return (
+    <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-card-soft space-y-2">
+      <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${colorClass}`}>
+        <Icon className="w-3.5 h-3.5" />
+        {title}
+      </div>
+      <div className="flex items-center gap-3">
+        {coverImage ? (
+          <img
+            src={getPropertyMediaUrl(coverImage)}
+            alt={property.title}
+            className="w-10 h-10 rounded-lg object-cover ring-1 ring-slate-200 flex-shrink-0"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+            <BarChart3 className="w-5 h-5 text-slate-400" />
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-slate-900 truncate">{property.title || 'Property'}</p>
+          <p className="text-xs text-slate-400 truncate">{property.locality || property.city}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -77,12 +194,11 @@ export default function SellerDashboardPage() {
   }
 
   const stats = data?.stats || {};
-  const formatPrice = (value) => {
-  const val = Number(value || 0);
-  if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
-  if (val >= 100000) return `₹${(val / 100000).toFixed(2)} Lakhs`;
-  return `₹${val.toLocaleString('en-IN')}`;
-};
+  const topProperties = data?.top_performing_properties || [];
+  const mostViewed = data?.most_viewed_property;
+  const mostEnquiries = data?.most_enquiries_property;
+  const highestScore = data?.highest_investment_score_property;
+
   const statCardsData = [
     { id: 'total', title: 'Total Properties', value: stats.total_properties || 0, description: 'All your listings', iconName: 'Building2' },
     { id: 'active', title: 'Active Listings', value: stats.active_listings || 0, description: 'Currently visible to buyers', iconName: 'Home' },
@@ -156,9 +272,6 @@ export default function SellerDashboardPage() {
 
       {/* 3. Recent Properties (maximum 5) */}
       <PropertyTable properties={(data?.recent_properties || []).slice(0, 5)} onDelete={setPropertyToDelete} />
-
-      {/* 4. Recent Activity Timeline */}
-      {/* <ActivityTimeline activities={(data?.recent_activity || []).slice(0, 5)} /> */}
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal

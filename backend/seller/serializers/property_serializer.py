@@ -94,6 +94,24 @@ class PropertyCreateUpdateSerializer(BaseSerializer):
 
     amenities = PropertyAmenitySerializer(many=True, required=False, default=[])
 
+    # AI Predictions & Investment Scores
+    predicted_price = serializers.FloatField(required=False, allow_null=True)
+    confidence_score = serializers.FloatField(required=False, allow_null=True)
+    appreciation_1yr = serializers.FloatField(required=False, allow_null=True)
+    appreciation_3yr = serializers.FloatField(required=False, allow_null=True)
+    appreciation_5yr = serializers.FloatField(required=False, allow_null=True)
+    future_price_1yr = serializers.FloatField(required=False, allow_null=True)
+    future_price_3yr = serializers.FloatField(required=False, allow_null=True)
+    future_price_5yr = serializers.FloatField(required=False, allow_null=True)
+    investment_score = serializers.IntegerField(required=False, allow_null=True)
+    investment_rating = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    investment_explanation = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    prediction_fingerprint = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    base_ml_price = serializers.FloatField(required=False, allow_null=True)
+    amenity_adjustment = serializers.FloatField(required=False, allow_null=True)
+    appreciation_methodology = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    prediction_timestamp = serializers.DateTimeField(required=False, allow_null=True)
+
 
 class PropertyResponseSerializer(BaseModelSerializer):
     id = serializers.CharField(read_only=True)
@@ -165,16 +183,29 @@ class PropertyResponseSerializer(BaseModelSerializer):
     created_at = serializers.CharField()
     updated_at = serializers.CharField()
 
-    # AI & Buyer Enriched Fields
-    investment_score = serializers.IntegerField(required=False, read_only=True, allow_null=True)
+    # AI & Investment Stored Predictions
+    predicted_price = serializers.FloatField(required=False, allow_null=True)
+    confidence_score = serializers.FloatField(required=False, allow_null=True)
+    appreciation_1yr = serializers.FloatField(required=False, allow_null=True)
+    appreciation_3yr = serializers.FloatField(required=False, allow_null=True)
+    appreciation_5yr = serializers.FloatField(required=False, allow_null=True)
+    future_price_1yr = serializers.FloatField(required=False, allow_null=True)
+    future_price_3yr = serializers.FloatField(required=False, allow_null=True)
+    future_price_5yr = serializers.FloatField(required=False, allow_null=True)
+    investment_score = serializers.IntegerField(required=False, allow_null=True)
+    investment_rating = serializers.CharField(required=False, allow_null=True)
+    investment_explanation = serializers.CharField(required=False, allow_null=True)
+    prediction_fingerprint = serializers.CharField(required=False, allow_null=True)
+    base_ml_price = serializers.FloatField(required=False, allow_null=True)
+    amenity_adjustment = serializers.FloatField(required=False, allow_null=True)
+    appreciation_methodology = serializers.CharField(required=False, allow_null=True)
+    prediction_timestamp = serializers.CharField(required=False, allow_null=True)
+
+    # Legacy/Enriched fields
     investment_tag = serializers.CharField(required=False, read_only=True, allow_null=True)
     investment_tag_icon = serializers.CharField(required=False, read_only=True, allow_null=True)
     appreciation_rate = serializers.CharField(required=False, read_only=True, allow_null=True)
     ai_fair_price = serializers.FloatField(required=False, read_only=True, allow_null=True)
-    future_price_1yr = serializers.FloatField(required=False, read_only=True, allow_null=True)
-    future_price_3yr = serializers.FloatField(required=False, read_only=True, allow_null=True)
-    future_price_5yr = serializers.FloatField(required=False, read_only=True, allow_null=True)
-    health_description = serializers.CharField(required=False, read_only=True, allow_null=True)
     score_breakdown = serializers.JSONField(required=False, read_only=True, allow_null=True)
 
 

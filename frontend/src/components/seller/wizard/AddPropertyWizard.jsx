@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { propertySchema } from '../../../validation/propertySchema';
@@ -7,7 +8,6 @@ import { useToast } from '../../../components/common/ToastContext';
 import ContentContainer from '../../../components/common/ContentContainer';
 import PageHeader from '../../../components/common/PageHeader';
 
-// Step Sub-Components & Live Preview Card
 import Step1BasicInfo from './Step1BasicInfo';
 import Step2PropertyDetails from './Step2PropertyDetails';
 import Step3PricingImages from './Step3PricingImages';
@@ -15,13 +15,16 @@ import Step4ReviewPublish from './Step4ReviewPublish';
 import LiveListingPreviewCard from './LiveListingPreviewCard';
 import WizardStepper from './WizardStepper';
 
-import { 
-  CheckCircle2, 
-  ArrowRight, 
-  ArrowLeft, 
+import {
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
   Loader2,
   AlertTriangle
 } from 'lucide-react';
+
+const TOTAL_STEPS = 5; // 0..4
+const LAST_STEP = TOTAL_STEPS - 1; // 4 — Review & Publish
 
 const defaultValues = {
   title: '',
@@ -80,14 +83,8 @@ const defaultValues = {
   rawBrochureFile: null,
 };
 
-// Wizard step mapping:
-//  0 — Basic Info    (title, type, sale, description)
-//  1 — Location      (state, city, locality, address)
-//  2 — Amenities     (property specs + amenity selection — from Step2PropertyDetails)
-//  3 — Media         (images, brochure, pricing — from Step3PricingImages)
-//  4 — AI Preview    (review & publish — from Step4ReviewPublish)
-
 export default function AddPropertyWizard() {
+  const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,30 +98,44 @@ export default function AddPropertyWizard() {
   });
 
   const { trigger, handleSubmit } = methods;
+  const isLastStep = currentStep === LAST_STEP;
 
-  const nextStep = async () => {
+  const nextStep = async (e) => {
+    // Extra safety: never let this bubble into a form submit
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    // Hard guard: nextStep should never run past the last step
+    if (isLastStep) return;
+
     setErrorMessage('');
     let fieldsToValidate = [];
 
     if (currentStep === 0) {
-      // Basic Info: title, propertyType, listingType, description
       fieldsToValidate = ['title', 'propertyType', 'listingType'];
       const isResale = methods.getValues('listingType') === 'Resale Property' || methods.getValues('saleType') === 'resale';
       if (isResale) fieldsToValidate.push('reconstructionNeeded');
     } else if (currentStep === 1) {
-      // Location: locality, fullAddress
       fieldsToValidate = ['locality', 'fullAddress'];
     } else if (currentStep === 2) {
-      // Amenities: carpetArea required
       fieldsToValidate = ['carpetArea'];
     } else if (currentStep === 3) {
-      // Media: expectedPrice required
+      // Media & Pricing step — validate price + images, then move to Review.
+      // This NEVER calls onFinalSubmit — publishing only happens from Step 4.
       fieldsToValidate = ['expectedPrice'];
+      const images = methods.getValues('images') || [];
+      const rawImageFiles = methods.getValues('rawImageFiles') || [];
+      if (images.length === 0 && rawImageFiles.length === 0) {
+        setErrorMessage('Uploading property images is mandatory. Please upload at least one image before proceeding.');
+        return;
+      }
     }
 
     const isValid = await trigger(fieldsToValidate);
     if (isValid) {
-      setCurrentStep((prev) => Math.min(prev + 1, 4));
+      setCurrentStep((prev) => Math.min(prev + 1, LAST_STEP));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       const stateErrors = methods.formState.errors;
@@ -146,7 +157,11 @@ export default function AddPropertyWizard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // This is the ONLY function that publishes. It is wired exclusively to the
+  // type="submit" button on Step 4 (Review & Publish) via handleSubmit().
   const onFinalSubmit = async (data) => {
+    if (!isLastStep) return; // hard guard — publishing can only happen from the review step
+
     setErrorMessage('');
     setSuccessMessage('');
     setIsSubmitting(true);
@@ -215,9 +230,14 @@ export default function AddPropertyWizard() {
           await propertyApi.uploadBrochure(propId, data.rawBrochureFile);
         }
 
-        setSuccessMessage(`Property "${data.title}" successfully published to active listings!`);
+        setSuccessMessage(`Property "${data.title}" successfully published to active listings! Redirecting to your dashboard...`);
         showSuccess('Property listed successfully in active database!');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Redirect to seller dashboard after a short pause so the user sees the success state
+        setTimeout(() => {
+          navigate('/seller/dashboard');
+        }, 1500);
       }
     } catch (err) {
       console.error('Form submission error:', err);
@@ -243,68 +263,59 @@ export default function AddPropertyWizard() {
           description="Interactive multi-step listing wizard with real-time live preview & AI valuation engine."
         />
 
-        {/* 5-Step Wizard Stepper */}
         <WizardStepper currentStep={currentStep} onStepClick={(stepIdx) => setCurrentStep(stepIdx)} />
 
-        {/* Success Banner */}
         {successMessage && (
-          <div className="p-4 mb-6 rounded-xl bg-[#f5fff6] border border-[#00855b]/30 text-[#006947] text-sm font-semibold flex items-center space-x-3 shadow-ambient">
+          <div className="p-4 mb-6 rounded-xl bg-[#f5fff6] border border-[#00855b]/30 text-[#006947] text-sm font-semibold flex items-center gap-3 shadow-ambient">
             <CheckCircle2 className="w-5 h-5 text-[#006947] flex-shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
 
-        {/* Error Banner */}
         {errorMessage && (
-          <div className="p-4 mb-6 rounded-xl bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#93000a] text-sm font-semibold flex items-center space-x-3 shadow-ambient">
+          <div className="p-4 mb-6 rounded-xl bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#93000a] text-sm font-semibold flex items-center gap-3 shadow-ambient">
             <AlertTriangle className="w-5 h-5 text-[#ba1a1a] flex-shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Main 2-Column Grid Layout */}
-        <form onSubmit={handleSubmit(onFinalSubmit)} onKeyDown={(e) => {
-          if (e.key === 'Enter' && currentStep < 4) {
-            e.preventDefault();}}}>
+        <form
+          onSubmit={handleSubmit(onFinalSubmit)}
+          onKeyDown={(e) => {
+            // Prevent Enter key from ever submitting except on the final review step
+            if (e.key === 'Enter' && !isLastStep) {
+              e.preventDefault();
+            }
+          }}
+        >
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column — Form Step */}
             <div className="lg:col-span-2 space-y-8 min-h-[400px]">
-              {/* Step 0: Basic Info (title, type, sale, description) */}
               {currentStep === 0 && <Step1BasicInfo mode="basic" />}
-
-              {/* Step 1: Location (state, city, locality, address) */}
               {currentStep === 1 && <Step1BasicInfo mode="location" />}
-
-              {/* Step 2: Amenities (property specs + amenities toggle) */}
               {currentStep === 2 && <Step2PropertyDetails />}
-
-              {/* Step 3: Media & Pricing */}
               {currentStep === 3 && <Step3PricingImages />}
-
-              {/* Step 4: AI Preview & Review */}
               {currentStep === 4 && <Step4ReviewPublish onJumpToStep={(stepIdx) => setCurrentStep(stepIdx)} />}
 
-              {/* Navigation Footer */}
               <div className="bg-white p-5 sm:p-6 rounded-xl border border-[#e2e7ff] shadow-ambient flex items-center justify-between gap-4">
                 <div>
                   {currentStep > 0 && (
                     <button
                       type="button"
                       onClick={prevStep}
-                      className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-lg border border-[#c2c6d6] text-[#424754] hover:bg-[#f2f3ff] text-xs font-bold transition cursor-pointer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[#c2c6d6] text-[#424754] hover:bg-[#f2f3ff] text-xs font-bold transition cursor-pointer"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       <span>Previous</span>
                     </button>
                   )}
-                </div>  
+                </div>
 
-                <div className="flex items-center space-x-3">
-                  {currentStep < 4 ? (
+                <div className="flex items-center gap-3">
+                  {!isLastStep ? (
                     <button
                       type="button"
                       onClick={nextStep}
-                      className="inline-flex items-center space-x-2 px-6 py-3 rounded-lg bg-[#0058be] hover:bg-[#004395] text-white text-xs font-bold shadow-lg shadow-[#0058be]/20 transition cursor-pointer"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#0058be] hover:bg-[#004395] text-white text-xs font-bold shadow-lg shadow-[#0058be]/20 transition cursor-pointer"
                     >
                       <span>Continue</span>
                       <ArrowRight className="w-4 h-4" />
@@ -313,7 +324,7 @@ export default function AddPropertyWizard() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="inline-flex items-center space-x-2 px-8 py-3.5 rounded-lg bg-[#006947] hover:bg-[#005236] text-white text-xs font-black shadow-lg shadow-[#006947]/20 transition cursor-pointer disabled:opacity-50"
+                      className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-[#006947] hover:bg-[#005236] text-white text-xs font-black shadow-lg shadow-[#006947]/20 transition cursor-pointer disabled:opacity-50"
                     >
                       {isSubmitting ? (
                         <>
@@ -332,7 +343,6 @@ export default function AddPropertyWizard() {
               </div>
             </div>
 
-            {/* Right Column — Sticky Live Preview */}
             <div className="lg:col-span-1">
               <LiveListingPreviewCard />
             </div>

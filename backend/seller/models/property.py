@@ -103,19 +103,41 @@ class Property(SellerBaseDocument):
     builder_name = me.StringField(required=False, null=True)
     project_name = me.StringField(required=False, null=True)
     rera_number = me.StringField(required=False, null=True)
-    possession_status = me.StringField(default='Ready')
+    possession_status = me.StringField(
+        default='Ready',
+        choices=['Ready', 'Under Construction', 'New Launch']
+    )
     possession_date = me.StringField(required=False, null=True)
 
     # Seller Contact Details
     seller_name = me.StringField(required=False, null=True)
     phone_number = me.StringField(required=False, null=True)
     email = me.StringField(required=False, null=True)
+    is_dataset_import = me.BooleanField(default=False)
 
     # Embedded Documents & Arrays
     amenities = me.EmbeddedDocumentListField(PropertyAmenity)
     images = me.EmbeddedDocumentListField(PropertyImage)
     brochures = me.EmbeddedDocumentListField(PropertyDocument)
     predictions = me.EmbeddedDocumentListField(PredictionHistory)
+
+    # AI Predictions & Investment Scores
+    predicted_price = me.FloatField(required=False, null=True)
+    confidence_score = me.FloatField(required=False, null=True)
+    appreciation_1yr = me.FloatField(required=False, null=True)
+    appreciation_3yr = me.FloatField(required=False, null=True)
+    appreciation_5yr = me.FloatField(required=False, null=True)
+    future_price_1yr = me.FloatField(required=False, null=True)
+    future_price_3yr = me.FloatField(required=False, null=True)
+    future_price_5yr = me.FloatField(required=False, null=True)
+    investment_score = me.IntField(required=False, null=True)
+    investment_rating = me.StringField(required=False, null=True)
+    investment_explanation = me.StringField(required=False, null=True)
+    prediction_fingerprint = me.StringField(required=False, null=True)
+    base_ml_price = me.FloatField(required=False, null=True)
+    amenity_adjustment = me.FloatField(required=False, null=True)
+    appreciation_methodology = me.StringField(required=False, null=True)
+    prediction_timestamp = me.DateTimeField(required=False, null=True)
 
     meta = {
         'collection': 'properties',
@@ -126,9 +148,22 @@ class Property(SellerBaseDocument):
             'property_type',
             'listing_type',
             'price',
+            'bhk',
+            'area_sqft',
+            'investment_score',
             'status',
             'is_deleted',
             'created_at',
+            # Compound indexes for common filter+sort patterns
+            ('status', 'locality', 'property_type'),
+            ('status', 'bhk', 'property_type'),
+            ('status', 'investment_score'),
+            ('status', 'price'),
+            ('status', 'created_at'),
             ('city', 'locality', 'property_type'),
+            ('status', 'locality', 'bhk'),
+            # Analytics-optimized compound indexes
+            ('seller_id', 'status', 'is_deleted'),
+            ('seller_id', 'investment_score'),
         ]
     }

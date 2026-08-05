@@ -70,8 +70,20 @@ export default function SignupPage() {
     if (!formData.last_name.trim()) newErrors.last_name = 'Last name is required.';
     if (!formData.email.trim()) newErrors.email = 'Email address is required.';
     if (!formData.phone_number.trim()) newErrors.phone_number = 'Phone number is required.';
-    if (!formData.password) newErrors.password = 'Password is required.';
-    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters.';
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required.';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters long.';
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one uppercase letter (A-Z).';
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one lowercase letter (a-z).';
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one number (0-9).';
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one special character (!@#$%^&*...).';
+    }
 
     if (formData.password !== formData.confirm_password) {
       newErrors.confirm_password = 'Passwords do not match.';
@@ -84,6 +96,7 @@ export default function SignupPage() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

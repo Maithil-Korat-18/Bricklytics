@@ -50,9 +50,19 @@ class BuyerPropertyListView(BaseAPIView):
         filters = {'status': 'active'}
         if request.query_params.get('property_type'):
             filters['property_type'] = request.query_params.get('property_type')
-        if request.query_params.get('bhk'):
-            filters['bhk'] = int(request.query_params.get('bhk'))
+        bhk_raw = request.query_params.get('bhk') or request.query_params.get('bhk_in')
+        if bhk_raw:
+            bhk_list = []
+            for b in str(bhk_raw).split(','):
+                b_str = b.strip()
+                if b_str.isdigit():
+                    bhk_list.append(int(b_str))
+            if len(bhk_list) > 1:
+                filters['bhk__in'] = bhk_list
+            elif len(bhk_list) == 1:
+                filters['bhk'] = bhk_list[0]
         if request.query_params.get('locality'):
+
             filters['locality__icontains'] = request.query_params.get('locality')
         if request.query_params.get('city'):
             filters['city__icontains'] = request.query_params.get('city')
@@ -63,23 +73,15 @@ class BuyerPropertyListView(BaseAPIView):
 
         buyer_svc = BuyerService()
 
-        # If sorting by investment score, query all matching without DB sort first then sort in memory
-        db_sort = sort_by if sort_by not in ['investment_score', '-investment_score'] else '-created_at'
-
         results, total_count = self.property_service.list_properties(
             filters=filters,
             search_query=search,
-            sort_by=db_sort,
+            sort_by=sort_by,
             page=page,
             page_size=page_size,
         )
 
         enriched_results = [buyer_svc.enrich_property(p) for p in results]
-
-        if sort_by == '-investment_score':
-            enriched_results.sort(key=lambda x: x.get('investment_score', 0), reverse=True)
-        elif sort_by == 'investment_score':
-            enriched_results.sort(key=lambda x: x.get('investment_score', 0))
 
         min_score = request.query_params.get('min_investment_score')
         if min_score:
@@ -97,6 +99,7 @@ class BuyerPropertyListView(BaseAPIView):
             page_size=page_size,
             message="Buyer property search results."
         )
+
 
 
 class BuyerPropertyDetailView(BaseAPIView):
@@ -259,3 +262,58 @@ class RecentlyViewedView(BaseAPIView):
             data=PropertyResponseSerializer(props, many=True).data,
             message="Recently viewed properties fetched."
         )
+
+
+class BetterAlternativesView(BaseAPIView):
+    """
+    GET /api/buyer/properties/<pk>/alternatives/
+    Returns better alternative properties ranked by investment score,
+    price-to-value ratio, and appreciation — same BHK and type.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.service = BuyerService()
+
+    def get(self, request, pk):
+        limit = int(request.query_params.get('limit', 3))
+        alternatives = self.service.get_better_alternatives(pk, limit=limit)
+        return self.success_response(
+            data=PropertyResponseSerializer(alternatives, many=True).data,
+            message="Better alternative properties fetched."
+        )
+
+
+class TopPropertiesView(BaseAPIView):
+    """
+    GET /api/buyer/top-properties/
+    Returns the top properties by investment score for the buyer dashboard.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.property_service = PropertyService()
+        self.buyer_service = BuyerService()
+
+    def get(self, request):
+        limit = int(request.query_params.get('limit', 6))
+        sort_by = request.query_params.get('sort_by', '-investment_score')
+
+        db_sort = sort_by
+        if sort_by == '-appreciation_3yr':
+            db_sort = '-appreciation_3yr'
+        elif sort_by in ['-investment_score', 'investment_score']:
+            db_sort = sort_by
+
+        results, _ = self.property_service.list_properties(
+            filters={'status': 'active'},
+            sort_by=db_sort,
+            page=1,
+            page_size=limit,
+        )
+
+        enriched = [self.buyer_service.enrich_property(p) for p in results]
+
+        return self.success_response(
+            data=PropertyResponseSerializer(enriched, many=True).data,
+            message="Top properties fetched."
+        )
+

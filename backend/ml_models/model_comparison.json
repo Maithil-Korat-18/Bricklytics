@@ -1,0 +1,38 @@
+{
+  "candidates": {
+    "RandomForest": {
+      "cv_mae_inr": 226213.74,
+      "cv_r2": 0.99556,
+      "mae_inr": 240680.56,
+      "mape_pct": 1.195,
+      "r2": 0.99405,
+      "seconds": 188.53
+    },
+    "GradientBoosting": {
+      "cv_mae_inr": 526829.38,
+      "cv_r2": 0.99585,
+      "mae_inr": 555065.83,
+      "mape_pct": 5.222,
+      "r2": 0.99573,
+      "seconds": 36.78
+    }
+  },
+  "selected_before_tuning": "RandomForest",
+  "tuned_test": {
+    "mae_inr": 239059.88,
+    "mape_pct": 1.193,
+    "r2": 0.99418
+  },
+  "deployed_model": "RandomForest (tuned)",
+  "feature_names": [
+    "bhk",
+    "area_per_sqft",
+    "rate_per_sqft",
+    "connectivity_score",
+    "lat",
+    "lon",
+    "property_type",
+    "locality_raw",
+    "geo_cluster"
+  ]
+}

@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 
 export default function WishlistPage() {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,18 +29,6 @@ export default function WishlistPage() {
   useEffect(() => {
     fetchWishlist();
   }, []);
-
-  const handleRemove = async (propertyId) => {
-    try {
-      await buyerApi.deleteWishlist(propertyId);
-      setWishlistItems((prev) =>
-        prev.filter((item) => item.property_id !== propertyId && item.property_details?.id !== propertyId)
-      );
-      showSuccess('Property removed from wishlist.');
-    } catch (err) {
-      showError('Failed to remove property from wishlist.');
-    }
-  };
 
   return (
     <div className="space-y-6 animate-fadeIn font-sans">
@@ -85,7 +73,14 @@ export default function WishlistPage() {
                 <PropertyCard
                   property={prop}
                   isFavoriteInitial={true}
-                  onFavoriteToggle={(toggledId) => handleRemove(toggledId || pid)}
+                  onFavoriteToggle={(toggledId, isFavorite) => {
+                    if (isFavorite) return;
+                    setWishlistItems((prev) => prev.filter((savedItem) => {
+                      const savedId = String(savedItem.property_id || savedItem.property_details?.id);
+                      return savedId !== String(toggledId || pid);
+                    }));
+                  }}
+                  showCompare
                 />
               </div>
             );

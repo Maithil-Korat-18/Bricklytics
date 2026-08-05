@@ -288,6 +288,28 @@
   border-bottom: none;
 }
 
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+
+  body * { visibility: hidden; }
+  #comparison-export, #comparison-export * { visibility: visible; }
+  #comparison-export {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    color: #131b2e;
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-hide { display: none !important; }
+  .comparison-print-table { overflow: visible !important; box-shadow: none !important; }
+  .comparison-table-content { min-width: 0 !important; }
+  .comparison-print-table .grid { font-size: 8px !important; }
+  .comparison-print-table .grid > div { padding: 5px !important; overflow-wrap: anywhere; }
+  section { break-inside: avoid; page-break-inside: avoid; }
+}
+
 /* ── Chart Container ─────────────────────────────────────────────────────────── */
 .chart-wrap {
   background-color: #f2f3ff;

@@ -1,17 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { LayoutGrid, List, SlidersHorizontal, ArrowLeft, ArrowRight, Building2, ArrowUpDown } from 'lucide-react';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { LayoutGrid, List, SlidersHorizontal, ArrowLeft, ArrowRight, Building2, ArrowUpDown, X } from 'lucide-react';
 import PropertyCard from '../../components/buyer/PropertyCard';
 import ExploreFilters from '../../components/buyer/ExploreFilters';
 import { buyerApi } from '../../services/buyerApi';
+import { getComparePropertyIds, saveComparePropertyIds } from '../../utils/compareSelection';
+import { ROUTES } from '../../constants/routes';
 
 export default function PropertyListingPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [properties, setProperties] = useState([]);
   const [favoritePropertyIds, setFavoritePropertyIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [compareCount, setCompareCount] = useState(() => getComparePropertyIds().length);
+
+  useEffect(() => {
+    const handleCompareUpdate = () => {
+      setCompareCount(getComparePropertyIds().length);
+    };
+    window.addEventListener('bricklytics_compare_updated', handleCompareUpdate);
+    return () => window.removeEventListener('bricklytics_compare_updated', handleCompareUpdate);
+  }, []);
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -277,6 +289,7 @@ export default function PropertyListingPage() {
                 property={prop}
                 isFavoriteInitial={favoritePropertyIds.has(prop.id)}
                 onFavoriteToggle={handleFavoriteToggle}
+                showCompare={true}
               />
             ))}
           </div>
@@ -304,6 +317,37 @@ export default function PropertyListingPage() {
             </button>
           </div>
         )}
+
+        {/* Floating Compare Bar */}
+        {/* {compareCount > 0 && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-slate-700 animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-blue-600 font-extrabold text-xs flex items-center justify-center text-white">
+                {compareCount}
+              </span>
+              <span className="text-xs font-bold text-slate-200">
+                {compareCount === 1 ? 'Property selected for comparison' : 'Properties selected for comparison'}
+              </span>
+            </div>
+            <button
+              onClick={() => navigate(ROUTES.COMPARE)}
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm cursor-pointer"
+            >
+              Compare Now
+            </button>
+            <button
+              onClick={() => {
+                saveComparePropertyIds([]);
+                setCompareCount(0);
+                window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
+              }}
+              className="p-1.5 text-slate-400 hover:text-white transition"
+              title="Clear comparison list"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )} */}
       </main>
     </div>
   );

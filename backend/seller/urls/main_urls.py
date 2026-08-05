@@ -11,7 +11,7 @@ Future sub-routers (uncomment when you build each feature):
 
 from django.urls import path, include
 
-from seller.views.analytics_views import AnalyticsDashboardView, SellerDashboardView
+from seller.views.analytics_views import AnalyticsDashboardView, SellerDashboardView, ReplyToInquiryView
 
 app_name = 'seller'
 
@@ -19,4 +19,6 @@ urlpatterns = [
     path('properties/', include('seller.urls.property_urls')),
     path('analytics/', AnalyticsDashboardView.as_view(), name='seller-analytics'),
     path('dashboard/', SellerDashboardView.as_view(), name='seller-dashboard'),
+    path('inquiries/<str:inquiry_id>/reply/', ReplyToInquiryView.as_view(), name='seller-inquiry-reply'),
 ]
+

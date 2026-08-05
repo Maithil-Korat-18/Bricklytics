@@ -17,20 +17,51 @@ export default function ExploreFilters({ filters, onFilterChange, onReset, total
     { label: 'Gota', value: 'Gota' },
     { label: 'Thaltej', value: 'Thaltej' },
     { label: 'SG Highway', value: 'SG Highway' },
+    { label: 'Vastrapur', value: 'Vastrapur' },
+    { label: 'Nikol', value: 'Nikol' },
+    { label: 'Sindhu Bhavan Road', value: 'Sindhu Bhavan Road' },
+    { label: 'Ambli', value: 'Ambli' },
+    { label: 'Chandkheda', value: 'Chandkheda' },
+    { label: 'Naranpura', value: 'Naranpura' },
+    { label: 'Paldi', value: 'Paldi' },
+    { label: 'CG Road', value: 'CG Road'},
+    { label: 'Maninagar', value: 'Maninagar' },
+    { label: 'Motera', value: 'Motera' },
+    { label: 'Navrangpura', value: 'Navrangpura' },
+    { label: 'Ellisbridge', value: 'Ellisbridge' },
+    { label: 'Memnagar', value: 'Memnagar' },
+    { label: 'Vatva', value: 'Vatva' },
+    { label: 'Naroda', value: 'Naroda' },
+    { label: 'Shahibaug', value: 'Shahibaug' },
   ];
 
   const propertyTypes = [
-    { label: 'Apartment', value: 'apartment' },
-    { label: 'Villa', value: 'villa' },
+    { label: 'Apartment / Flat', value: 'apartment' },
+    { label: 'Villa / House', value: 'villa' },
   ];
 
   const bhkOptions = [
-    { label: '1', value: '1' },
-    { label: '2', value: '2' },
-    { label: '3', value: '3' },
-    { label: '4', value: '4' },
-    { label: '5+', value: '5' },
+    { label: '1 BHK', value: '1' },
+    { label: '2 BHK', value: '2' },
+    { label: '3 BHK', value: '3' },
+    { label: '4 BHK', value: '4' },
+    { label: '5+ BHK', value: '5' },
   ];
+
+  // Helper for multi-bhk selection array vs comma string
+  const currentBhkArray = Array.isArray(filters.bhk)
+    ? filters.bhk
+    : String(filters.bhk || '').split(',').map((s) => s.trim()).filter(Boolean);
+
+  const toggleBhk = (val) => {
+    let next;
+    if (currentBhkArray.includes(val)) {
+      next = currentBhkArray.filter((v) => v !== val);
+    } else {
+      next = [...currentBhkArray, val];
+    }
+    handleChange('bhk', next.join(','));
+  };
 
   return (
     <aside className="w-full lg:w-80 flex-shrink-0 bg-white border-r border-slate-200/80 overflow-y-auto p-5 space-y-6 font-sans">
@@ -114,7 +145,7 @@ export default function ExploreFilters({ filters, onFilterChange, onReset, total
         </div>
       </div>
 
-      {/* Property Type (Only Apartment and Villa) */}
+      {/* Property Type (Apartment/Flat vs Villa/House) */}
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
           Property Type
@@ -140,20 +171,23 @@ export default function ExploreFilters({ filters, onFilterChange, onReset, total
         </div>
       </div>
 
-      {/* BHK */}
+      {/* Multi-BHK Selection */}
       <div className="space-y-2">
-        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-          BHK
-        </label>
-        <div className="grid grid-cols-5 gap-1.5">
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+            BHK Selection
+          </label>
+          <span className="text-[10px] text-slate-400 font-medium">(Select multiple)</span>
+        </div>
+        <div className="grid grid-cols-3 gap-1.5">
           {bhkOptions.map((bhk) => {
-            const active = (filters.bhk || '') === bhk.value;
+            const active = currentBhkArray.includes(bhk.value);
             return (
               <button
                 key={bhk.value}
                 type="button"
-                onClick={() => handleChange('bhk', active ? '' : bhk.value)}
-                className={`py-2 rounded-xl text-xs font-semibold transition-all text-center border ${
+                onClick={() => toggleBhk(bhk.value)}
+                className={`py-2 px-1 rounded-xl text-xs font-semibold transition-all text-center border cursor-pointer ${
                   active
                     ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -165,6 +199,7 @@ export default function ExploreFilters({ filters, onFilterChange, onReset, total
           })}
         </div>
       </div>
+
 
       <hr className="border-slate-100" />
 

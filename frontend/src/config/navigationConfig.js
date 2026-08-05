@@ -64,11 +64,12 @@ export const buyerNavigationConfig = [
     exact: false,
   },
   {
-    title: 'Schedule Site Visit',
+    title: 'Inquiry & Site Visit',
     path: ROUTES.SCHEDULE_VISIT,
     icon: Calendar,
     exact: false,
   },
+
   {
     title: 'My Profile',
     path: ROUTES.BUYER_PROFILE,

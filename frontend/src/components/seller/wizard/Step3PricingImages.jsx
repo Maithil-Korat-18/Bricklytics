@@ -20,7 +20,10 @@ export default function Step3PricingImages() {
   const [predictionError, setPredictionError] = useState('');
 
   const formValues = watch();
-  const { locality, carpetArea, bhk, propertyType, amenities = [], expectedPrice, reconstructionNeeded, sampleHouseReady } = formValues;
+  const {
+    locality, carpetArea, bhk, propertyType, amenities = [], expectedPrice,
+    reconstructionNeeded, sampleHouseReady, builderName, propertyAge, furnishing, parking, floorNumber, facing
+  } = formValues;
 
   const runAIPrediction = async () => {
     if (!carpetArea || !locality) return;
@@ -36,7 +39,13 @@ export default function Step3PricingImages() {
         property_type: (propertyType || 'Flat / Apartment').includes('Villa') ? 'villa' : 'flat',
         amenities: amenities,
         reconstruction_needed: reconstructionNeeded,
-        rate_per_sqft: 0,
+        builder_name: builderName || '',
+        property_age: propertyAge ? Number(propertyAge) : 1,
+        furnishing: furnishing || 'Unfurnished',
+        parking: parking || 'Yes',
+        floor_number: floorNumber ? Number(floorNumber) : 1,
+        facing: facing || 'East',
+        rate_per_sqft: expectedPrice && carpetArea ? Math.round(Number(expectedPrice) / Number(carpetArea)) : 0,
       };
 
       const res = await propertyApi.predictCondition(payload);
@@ -55,13 +64,15 @@ export default function Step3PricingImages() {
     if (carpetArea && locality) {
       runAIPrediction();
     }
-  }, [locality, carpetArea, bhk, propertyType, reconstructionNeeded, JSON.stringify(amenities)]);
+  }, [
+    locality, carpetArea, bhk, propertyType, reconstructionNeeded, builderName, propertyAge, furnishing, parking, floorNumber, facing, JSON.stringify(amenities)
+  ]);
 
   const acceptSuggestedPrice = () => {
-  if (predictionData?.final_suggested_price) {
-    setValue('expectedPrice', Math.round(predictionData.final_suggested_price), { shouldValidate: true });
-  }
-};
+    if (predictionData?.final_suggested_price) {
+      setValue('expectedPrice', Math.round(predictionData.final_suggested_price), { shouldValidate: true });
+    }
+  };
 
   const currentExpected = expectedPrice ? Number(expectedPrice) : 0;
   const suggestedPrice = predictionData?.final_suggested_price || 0;
@@ -127,7 +138,7 @@ export default function Step3PricingImages() {
                     <UploadCloud className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-[#131b2e]">Drag & Drop Property Images here</span>
+                    <span className="text-sm font-bold text-[#131b2e]">Drag & Drop Property Images here (Mandatory)</span>
                     <p className="text-xs text-[#727785] mt-0.5">Supports PNG, JPG, WEBP (Cover image will be used in listing card)</p>
                   </div>
                   <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileDrop} />
@@ -191,9 +202,9 @@ export default function Step3PricingImages() {
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#e2e7ff] shadow-ambient space-y-6">
         <div className="border-b border-[#f2f3ff] pb-4">
           <h3 className="text-base font-bold text-[#131b2e] flex items-center gap-2">
-            <IndianRupee className="w-5 h-5 text-[#006947]" /> Pricing & Commercial Terms
+            <IndianRupee className="w-5 h-5 text-[#006947]" /> Pricing & Dynamic AI Analytics
           </h3>
-          <p className="text-xs text-[#727785] mt-1">Set expected price alongside AI Suggested Price</p>
+          <p className="text-xs text-[#727785] mt-1">Set expected price alongside real-time AI valuation</p>
         </div>
 
         {predictionError && (
@@ -205,82 +216,71 @@ export default function Step3PricingImages() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           {/* LEFT SIDE: SELLER EXPECTED PRICE INPUTS */}
-          <div className="bg-[#f2f3ff]/70 p-6 rounded-2xl border border-[#c2c6d6] space-y-4 flex flex-col justify-between">
+          <div className="bg-[#f2f3ff]/70 p-8 rounded-2xl border border-[#c2c6d6] space-y-6 flex flex-col justify-between h-full">
             <div>
-              <h4 className="text-sm font-bold text-[#131b2e] mb-1">Set Your Price</h4>
-              <p className="text-xs text-[#727785] mb-4">Enter seller expected price and financial terms</p>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-[#0058be]/10 flex items-center justify-center">
+                  <span className="text-[#0058be] font-bold text-sm">₹</span>
+                </div>
+                <h4 className="text-base font-bold text-[#131b2e]">Set Your Price</h4>
+              </div>
+              <p className="text-xs text-[#727785] mb-6 leading-relaxed">
+                Enter seller expected price and financial terms
+              </p>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-xs font-bold text-[#424754] uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-[#424754] uppercase tracking-wider mb-2">
                     Seller Expected Price (₹) <span className="text-[#ba1a1a]">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-3.5 text-[#727785] font-bold text-sm">₹</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#727785] font-bold text-sm">₹</span>
                     <input
-  type="number"
-  step="1"
-  min="0"
-  placeholder="e.g. 18500000"
-  {...register('expectedPrice', {
-    onChange: (e) => {
-      const rounded = e.target.value ? Math.round(Number(e.target.value)) : '';
-      setValue('expectedPrice', rounded, { shouldValidate: true });
-    },
-  })}
-  onKeyDown={(e) => {
-    if (e.key === '.' || e.key === ',' || e.key === '-') e.preventDefault();
-  }}
-  className="w-full pl-9 pr-4 py-3 rounded-xl border border-[#c2c6d6] focus:border-[#0058be] focus:ring-2 focus:ring-[#adc6ff] text-base font-bold text-[#131b2e] outline-none transition bg-white"
-/>
+                      type="number"
+                      step="1"
+                      min="0"
+                      placeholder="e.g. 18500000"
+                      {...register('expectedPrice', {
+                        onChange: (e) => {
+                          const rounded = e.target.value ? Math.round(Number(e.target.value)) : '';
+                          setValue('expectedPrice', rounded, { shouldValidate: true });
+                        },
+                      })}
+                      onKeyDown={(e) => {
+                        if (e.key === '.' || e.key === ',' || e.key === '-') e.preventDefault();
+                      }}
+                      className="w-full pl-9 pr-4 py-3.5 rounded-xl border border-[#c2c6d6] focus:border-[#0058be] focus:ring-2 focus:ring-[#adc6ff] text-base font-bold text-[#131b2e] outline-none transition bg-white"
+                    />
                   </div>
+
                   {currentExpected > 0 && (
-                    <p className="text-xs text-[#0058be] font-bold mt-1">
+                    <p className="text-xs text-[#0058be] font-bold mt-2">
                       Formatted: {formatPriceCr(currentExpected)}
                     </p>
                   )}
-                  {errors.expectedPrice && <p className="text-xs text-[#ba1a1a] mt-1 font-medium">{errors.expectedPrice.message}</p>}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-[#424754] uppercase tracking-wider mb-1.5">Maintenance (₹/Mo)</label>
-                    <input
-                      type="number"
-                      placeholder="e.g. 3500"
-                      {...register('maintenanceCharges')}
-                      className="w-full px-4 py-2.5 rounded-xl border border-[#c2c6d6] text-sm outline-none bg-white text-[#131b2e]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-[#424754] uppercase tracking-wider mb-1.5">Booking Amount (₹)</label>
-                    <input
-                      type="number"
-                      placeholder="e.g. 100000"
-                      {...register('bookingAmount')}
-                      className="w-full px-4 py-2.5 rounded-xl border border-[#c2c6d6] text-sm outline-none bg-white text-[#131b2e]"
-                    />
-                  </div>
+                  {errors.expectedPrice && (
+                    <p className="text-xs text-[#ba1a1a] mt-2 font-medium">{errors.expectedPrice.message}</p>
+                  )}
                 </div>
               </div>
             </div>
 
             {currentExpected > 0 && suggestedPrice > 0 && (
-              <div className="pt-3 border-t border-[#c2c6d6] flex items-center justify-between text-xs font-semibold">
-                <span className="text-[#727785]">Price Difference vs AI:</span>
-                <span className={difference >= 0 ? 'text-[#006947] font-bold' : 'text-[#ba1a1a] font-bold'}>
+              <div className="pt-4 border-t border-[#c2c6d6] flex items-center justify-between">
+                <span className="text-xs font-semibold text-[#727785]">Price Difference vs AI:</span>
+                <span className={`text-sm font-bold ${difference >= 0 ? 'text-[#006947]' : 'text-[#ba1a1a]'}`}>
                   {difference >= 0 ? `+₹${difference.toLocaleString('en-IN')}` : `-₹${Math.abs(difference).toLocaleString('en-IN')}`}
                 </span>
               </div>
             )}
           </div>
 
-          {/* RIGHT SIDE: AI SUGGESTED PRICE CARD */}
+          {/* RIGHT SIDE: DYNAMIC AI PREDICTION CARD */}
           <div className="bg-gradient-to-br from-[#d8e2ff]/50 via-[#f2f3ff] to-white p-6 sm:p-8 rounded-2xl border border-[#adc6ff] shadow-ambient flex flex-col justify-between space-y-6">
             <div>
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center space-x-1.0 bg-[#d8e2ff] text-[#0058be] px-3 py-1 rounded-full text-xs font-extrabold border border-[#adc6ff]">
-                  <Sparkles className="w-4.0 h-3.5 text-[#0058be]" /> AI Valuation
+                <span className="inline-flex items-center space-x-1.5 bg-[#d8e2ff] text-[#0058be] px-3 py-1 rounded-full text-xs font-extrabold border border-[#adc6ff]">
+                  <Sparkles className="w-4 h-4 text-[#0058be]" /> AI Engine Analysis
                 </span>
                 <button
                   type="button"
@@ -289,21 +289,65 @@ export default function Step3PricingImages() {
                   className="text-xs text-[#0058be] hover:text-[#004395] flex items-center gap-1 font-bold cursor-pointer disabled:opacity-50"
                 >
                   <Calculator className="w-3.5 h-3.5" />
-                  <span>{isPredicting ? 'Calculating...' : 'Refresh AI Price'}</span>
+                  <span>{isPredicting ? 'Calculating...' : 'Recalculate AI'}</span>
                 </button>
               </div>
 
-              <div className="mt-6 text-center py-4 bg-white rounded-xl border border-[#e2e7ff] shadow-ambient">
+              {/* Price & Confidence */}
+              <div className="mt-4 text-center py-4 bg-white rounded-xl border border-[#e2e7ff] shadow-ambient">
                 <span className="text-xs font-extrabold text-[#0058be] uppercase tracking-widest block">AI Suggested Price</span>
-                <div className="text-3xl sm:text-4xl font-black text-[#131b2e] mt-2 tracking-tight">
+                <div className="text-3xl sm:text-4xl font-black text-[#131b2e] mt-1 tracking-tight">
                   {predictionData?.final_suggested_price_formatted || '₹ --'}
                 </div>
                 {predictionData?.confidence_score && (
-                  <p className="text-xs text-[#006947] font-bold mt-2">
+                  <p className="text-xs text-[#006947] font-bold mt-1">
                     {predictionData.confidence_score}% Confidence
                   </p>
                 )}
               </div>
+
+              {/* Estimated from market similarity; not historical time-series forecasting. */}
+              {/* {predictionData?.appreciation && (
+                <div className="mt-4 p-4 bg-white rounded-xl border border-[#e2e7ff] space-y-2">
+                  <span className="text-[11px] font-extrabold text-[#424754] uppercase tracking-wider block">Appreciation Forecasts</span>
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="p-2 rounded-lg bg-[#f5fff6] border border-[#00855b]/20">
+                      <span className="text-[10px] text-[#727785] block font-semibold">1 Year</span>
+                      <span className="font-extrabold text-[#006947]">+{predictionData.appreciation.estimated_1yr.appreciation_percent}%</span>
+                      <span className="text-[10px] text-[#424754] block font-bold mt-0.5">{formatPriceCr(predictionData.appreciation.estimated_1yr.future_estimated_price)}</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#f5fff6] border border-[#00855b]/20">
+                      <span className="text-[10px] text-[#727785] block font-semibold">3 Years</span>
+                      <span className="font-extrabold text-[#006947]">+{predictionData.appreciation.estimated_3yr.appreciation_percent}%</span>
+                      <span className="text-[10px] text-[#424754] block font-bold mt-0.5">{formatPriceCr(predictionData.appreciation.estimated_3yr.future_estimated_price)}</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#f5fff6] border border-[#00855b]/20">
+                      <span className="text-[10px] text-[#727785] block font-semibold">5 Years</span>
+                      <span className="font-extrabold text-[#006947]">+{predictionData.appreciation.estimated_5yr.appreciation_percent}%</span>
+                      <span className="text-[10px] text-[#424754] block font-bold mt-0.5">{formatPriceCr(predictionData.appreciation.estimated_5yr.future_estimated_price)}</span>
+                    </div>
+                  </div>
+                </div>
+              )} */}
+
+              {/* Investment Score & Rating */}
+              {/* {predictionData?.investment && (
+                <div className="mt-4 p-4 bg-[#f2f3ff] rounded-xl border border-[#c2c6d6] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-extrabold text-[#0058be] uppercase tracking-wider">Investment Score</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+                      predictionData.investment.rating === 'Excellent' ? 'bg-[#006947] text-white' :
+                      predictionData.investment.rating === 'Good' ? 'bg-[#0058be] text-white' :
+                      predictionData.investment.rating === 'Moderate' ? 'bg-amber-500 text-white' : 'bg-[#ba1a1a] text-white'
+                    }`}>
+                      {predictionData.investment.rating} ({predictionData.investment.score}/100)
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#424754] font-medium leading-snug">
+                    {predictionData.investment.explanation}
+                  </p>
+                </div>
+              )} */}
             </div>
 
             {predictionData?.final_suggested_price && (

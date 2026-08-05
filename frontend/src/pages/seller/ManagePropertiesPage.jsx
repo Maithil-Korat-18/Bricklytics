@@ -22,6 +22,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function ManagePropertiesPage() {
@@ -47,8 +48,43 @@ export default function ManagePropertiesPage() {
 
   // Confirmation Modal State
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [soldModalOpen, setSoldModalOpen] = useState(false);
   const [targetProperty, setTargetProperty] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const handleSoldToggleClick = (prop) => {
+    setTargetProperty(prop);
+    setSoldModalOpen(true);
+  };
+
+  const confirmSoldToggle = async () => {
+    if (!targetProperty) return;
+    setUpdatingStatus(true);
+    const nextStatus = targetProperty.status === 'sold' ? 'active' : 'sold';
+    try {
+      const res = await propertyApi.updatePropertyStatus(targetProperty.id, nextStatus);
+      if (res.success || res.data) {
+        showSuccess(
+          nextStatus === 'sold'
+            ? `Property "${targetProperty.title}" marked as SOLD. It will no longer be visible to buyers.`
+            : `Property "${targetProperty.title}" reactivated as UNSOLD/ACTIVE.`
+        );
+        setProperties((prev) =>
+          prev.map((p) => (p.id === targetProperty.id ? { ...p, status: nextStatus } : p))
+        );
+      } else {
+        throw new Error(res.message || 'Failed to update property status.');
+      }
+    } catch (err) {
+      showError(err.message || 'Error updating status.');
+    } finally {
+      setUpdatingStatus(false);
+      setSoldModalOpen(false);
+      setTargetProperty(null);
+    }
+  };
+
 
   // Trigger search on filter change
   const handleSearchSubmit = (e) => {
@@ -255,10 +291,12 @@ export default function ManagePropertiesPage() {
                     <h4 className="text-lg font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
                       {prop.title}
                     </h4>
+                    
 
                     <div className="flex items-center text-xs text-gray-500 space-x-1">
                       <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                       <span className="truncate">{prop.locality || prop.city}, {prop.state}</span>
+                      
                     </div>
 
                     <div className="flex items-baseline justify-between pt-2 border-t border-gray-100">
@@ -272,12 +310,7 @@ export default function ManagePropertiesPage() {
                             : `₹${prop.price?.toLocaleString('en-IN')}`}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <span className="text-xs text-gray-500">Inventory Left</span>
-                        <p className="text-sm font-bold text-slate-800">
-                          {prop.units_available !== undefined ? `${prop.units_available} Left` : `${prop.area_sqft} sq ft`}
-                        </p>
-                      </div>
+                    
                     </div>
                   </div>
                 </div>
@@ -307,13 +340,25 @@ export default function ManagePropertiesPage() {
                     </button>
                   </div>
 
-                  
+                  {/* Mark as Sold / Unsold Toggle */}
+                  <button
+                    onClick={() => handleSoldToggleClick(prop)}
+                    className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 cursor-pointer ${
+                      prop.status === 'sold'
+                        ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{prop.status === 'sold' ? 'Mark as Unsold (Reactivate)' : 'Mark as Sold'}</span>
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
       )}
+
 
       {/* Pagination Footer */}
       {!loading && pagination.totalPages > 1 && (
@@ -351,8 +396,25 @@ export default function ManagePropertiesPage() {
         confirmVariant="danger"
         loading={deleting}
         onConfirm={confirmDelete}
-        onClose={closeDeleteModal}
+        onClose={() => setDeleteModalOpen(false)}
+      />
+
+      {/* Sold/Unsold Status Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={soldModalOpen}
+        title={targetProperty?.status === 'sold' ? 'Reactivate Property (Mark Unsold)' : 'Mark Property as Sold'}
+        message={
+          targetProperty?.status === 'sold'
+            ? `Are you sure you want to reactivate "${targetProperty?.title}"? It will become visible to buyers again on the explore page.`
+            : `Are you sure you want to mark "${targetProperty?.title}" as SOLD? It will be immediately hidden from the buyer portal and search results.`
+        }
+        confirmText={targetProperty?.status === 'sold' ? 'Reactivate' : 'Confirm Sold'}
+        confirmVariant={targetProperty?.status === 'sold' ? 'primary' : 'warning'}
+        loading={updatingStatus}
+        onConfirm={confirmSoldToggle}
+        onClose={() => setSoldModalOpen(false)}
       />
     </ContentContainer>
   );
 }
+

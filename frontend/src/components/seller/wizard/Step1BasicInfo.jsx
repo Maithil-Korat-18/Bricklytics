@@ -5,7 +5,6 @@ import { propertyApi } from '../../../services/propertyApi';
 
 const AHMEDABAD_LOCALITIES = [
   'South Bopal',
-  'Bopal',
   'Satellite',
   'Bodakdev',
   'Prahlad Nagar',
@@ -30,6 +29,7 @@ const AHMEDABAD_LOCALITIES = [
   'Vatva',
   'Naroda',
   'Nikol',
+  'Shahibaug',
 ];
 
 const RENOVATION_OPTIONS = [
@@ -40,7 +40,7 @@ const RENOVATION_OPTIONS = [
   'Newly Renovated',
 ];
 
-export default function Step1BasicInfo({ mode }) {
+export default function Step1BasicInfo({ mode, preloadedLocalities }) {
   const { register, watch, setValue, formState: { errors } } = useFormContext();
   const [apiLocalities, setApiLocalities] = useState([]);
 
@@ -49,6 +49,11 @@ export default function Step1BasicInfo({ mode }) {
   const isResale = selectedListingType === 'Resale Property';
 
   useEffect(() => {
+    // If parent already provided localities (e.g. EditPropertyPage), don't re-fetch
+    if (preloadedLocalities && preloadedLocalities.length > 0) {
+      setApiLocalities(preloadedLocalities);
+      return;
+    }
     async function loadLocalities() {
       try {
         const res = await propertyApi.getAhmedabadLocations();
@@ -61,14 +66,16 @@ export default function Step1BasicInfo({ mode }) {
       }
     }
     loadLocalities();
-  }, []);
+  }, [preloadedLocalities]);
 
-  const localitiesList = apiLocalities.length > 0 
-    ? Array.from(new Set([...apiLocalities, ...AHMEDABAD_LOCALITIES]))
-    : AHMEDABAD_LOCALITIES;
+  const localitiesList =
+    apiLocalities.length > 0
+      ? Array.from(new Set([...apiLocalities, ...AHMEDABAD_LOCALITIES]))
+      : AHMEDABAD_LOCALITIES;
 
   const showBasic = !mode || mode === 'basic';
   const showLocation = !mode || mode === 'location';
+
 
   return (
     <div className="space-y-8 animate-fadeIn">

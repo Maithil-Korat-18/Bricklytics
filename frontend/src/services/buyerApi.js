@@ -65,4 +65,18 @@ export const buyerApi = {
     const response = await apiClient.get('/buyer/recently-viewed/');
     return response.data;
   },
+
+  getBetterAlternatives: async (propertyId, limit = 3) => {
+    const response = await apiClient.get(`/buyer/properties/${propertyId}/alternatives/`, {
+      params: { limit },
+    });
+    return response.data;
+  },
+
+  getTopProperties: async (limit = 6, sortBy = '-investment_score') => {
+    const response = await apiClient.get('/buyer/top-properties/', {
+      params: { limit, sort_by: sortBy },
+    });
+    return response.data;
+  },
 };

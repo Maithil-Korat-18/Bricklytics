@@ -16,10 +16,13 @@ class VisitSchedule(BaseDocument):
     preferred_date = me.StringField(required=True)
     preferred_time = me.StringField(required=True)
     notes = me.StringField(required=False, null=True, default='')
+    seller_reply = me.StringField(required=False, null=True)
+    replied_at = me.DateTimeField(required=False, null=True)
     status = me.StringField(
         default='requested',
         choices=['requested', 'confirmed', 'completed', 'cancelled']
     )
+
 
     meta = {
         'collection': 'visit_schedules',
