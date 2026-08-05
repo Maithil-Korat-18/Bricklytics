@@ -96,13 +96,13 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
                   className={({ isActive }) => `
                     flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200
                     ${isActive 
-                      ? 'bg-[#d8e2ff] text-[#0058be] font-bold shadow-xs translate-x-0.5' 
-                      : 'text-[#424754] hover:bg-[#f2f3ff] hover:text-[#131b2e]'}
+                      ? 'bg-[#3E6FE0]/10 text-[#3E6FE0] font-bold shadow-xs translate-x-0.5' 
+                      : 'text-[#5B6270] hover:bg-[#FAFAF8] hover:text-[#14171F]'}
                   `}
                 >
                   {({ isActive }) => (
                     <>
-                      {Icon && <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-[#0058be]' : 'text-[#727785]'}`} />}
+                      {Icon && <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-[#3E6FE0]' : 'text-[#727785]'}`} />}
                       <span className="truncate">{item.title}</span>
                     </>
                   )}
@@ -131,12 +131,12 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
             onClick={() => setProfileMenuOpen((isOpen) => !isOpen)}
             aria-expanded={profileMenuOpen}
             aria-haspopup="menu"
-            className="flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition-all border border-slate-200/80 bg-white hover:bg-[#f2f3ff] hover:border-blue-200 focus:outline-none focus:ring-2 focus:ring-[#0058be]/20 cursor-pointer shadow-xs"
+            className="flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition-all border border-slate-200/80 bg-white hover:bg-[#FAFAF8] hover:border-blue-200 focus:outline-none focus:ring-2 focus:ring-[#3E6FE0]/20 cursor-pointer shadow-xs"
           >
             {userAvatar ? (
               <img src={userAvatar} alt="Profile" className="w-9 h-9 rounded-full object-cover shrink-0" />
             ) : (
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0058be] text-sm font-extrabold text-white shadow-sm">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#3E6FE0] text-sm font-extrabold text-white shadow-sm">
                 {initialLetter}
               </span>
             )}

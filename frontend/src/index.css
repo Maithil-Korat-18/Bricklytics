@@ -7,54 +7,67 @@
 @layer base {
   body {
     @apply antialiased min-h-screen;
-    font-family: 'Geist', 'Inter', system-ui, sans-serif;
-    background-color: #faf8ff;
-    color: #131b2e;
+    font-family: 'Inter', 'Geist', system-ui, sans-serif;
+    background-color: var(--paper, #FAFAF8);
+    color: var(--ink, #14171F);
   }
 
   ::selection {
-    background-color: #0058be;
+    background-color: #3E6FE0;
     color: #ffffff;
   }
 }
 
-/* ── CSS Custom Properties — Brand Color System ───────────────────────────── */
+/* ── CSS Custom Properties — Master Design System Tokens ─────────────────── */
 :root {
-  --surface:                    #faf8ff;
-  --surface-dim:                #d2d9f4;
-  --surface-bright:             #faf8ff;
-  --surface-container-lowest:   #ffffff;
-  --surface-container-low:      #f2f3ff;
-  --surface-container:          #eaedff;
-  --surface-container-high:     #e2e7ff;
-  --surface-container-highest:  #dae2fd;
-  --on-surface:                 #131b2e;
-  --on-surface-variant:         #424754;
-  --inverse-surface:            #283044;
-  --inverse-on-surface:         #eef0ff;
+  --paper:                      #FAFAF8;
+  --ink:                        #14171F;
+  --ink-soft:                   #5B6270;
+  --signal:                     #3E6FE0;
+  --signal-deep:                #2A54BE;
+  --match-green:                #2FAE6E;
+  --terracotta:                 #C1694F;
+  --blue-glow:                  rgba(62, 111, 224, 0.16);
+  --purple-glow:                rgba(130, 94, 235, 0.12);
+  --grid-line:                  rgba(20, 23, 31, 0.05);
+  --line-dim:                   rgba(20, 23, 31, 0.10);
+
+  --bg:                         var(--paper);
+  --surface:                    #FFFFFF;
+  --surface-dim:                #F3F4F6;
+  --surface-bright:             #FAFAF8;
+  --surface-container-lowest:   #FFFFFF;
+  --surface-container-low:      #F8F9FA;
+  --surface-container:          #F0F3FA;
+  --surface-container-high:     #E5EAEF;
+  --surface-container-highest:  #DAE2FD;
+  --on-surface:                 #14171F;
+  --on-surface-variant:         #5B6270;
+  --inverse-surface:            #14171F;
+  --inverse-on-surface:         #FAFAF8;
   --outline:                    #727785;
-  --outline-variant:            #c2c6d6;
-  --surface-tint:               #005ac2;
-  --primary:                    #0058be;
-  --on-primary:                 #ffffff;
-  --primary-container:          #2170e4;
-  --on-primary-container:       #fefcff;
-  --inverse-primary:            #adc6ff;
-  --secondary:                  #505f76;
-  --on-secondary:               #ffffff;
-  --secondary-container:        #d0e1fb;
-  --on-secondary-container:     #54647a;
-  --tertiary:                   #006947;
-  --on-tertiary:                #ffffff;
-  --tertiary-container:         #00855b;
-  --on-tertiary-container:      #f5fff6;
-  --error:                      #ba1a1a;
-  --on-error:                   #ffffff;
-  --error-container:            #ffdad6;
-  --on-error-container:         #93000a;
-  --background:                 #faf8ff;
-  --on-background:              #131b2e;
-  --surface-variant:            #dae2fd;
+  --outline-variant:            #C2C6D6;
+  --surface-tint:               #3E6FE0;
+  --primary:                    #3E6FE0;
+  --on-primary:                 #FFFFFF;
+  --primary-container:          #3E6FE0;
+  --on-primary-container:       #FFFFFF;
+  --inverse-primary:            #ADC6FF;
+  --secondary:                  #505F76;
+  --on-secondary:               #FFFFFF;
+  --secondary-container:        #D0E1FB;
+  --on-secondary-container:     #54647A;
+  --tertiary:                   #2FAE6E;
+  --on-tertiary:                #FFFFFF;
+  --tertiary-container:         #2FAE6E;
+  --on-tertiary-container:      #FFFFFF;
+  --error:                      #BA1A1A;
+  --on-error:                   #FFFFFF;
+  --error-container:            #FFDAD6;
+  --on-error-container:         #93000A;
+  --background:                 #FAFAF8;
+  --on-background:              #14171F;
+  --surface-variant:            #E5EAEF;
 
   /* Component tokens */
   --card-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
