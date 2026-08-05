@@ -7,7 +7,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from rest_framework.authentication import BaseAuthentication
-from core.exceptions.base import AuthenticationError
+from core.exceptions.base import AuthenticationError, ResourceNotFoundError
 from accounts.models.user import User
 
 logger = logging.getLogger('bricklytics.auth')
@@ -67,5 +67,10 @@ class JWTAuthentication(BaseAuthentication):
             if not user.is_active:
                 raise AuthenticationError("User account has been deactivated.")
             return (user, token)
-        except Exception:
+        except ResourceNotFoundError:
+            raise AuthenticationError("User associated with token no longer exists.")
+        except AuthenticationError:
+            raise
+        except Exception as exc:
+            logger.exception("Unexpected error in JWT authentication: %s", exc)
             raise AuthenticationError("User associated with token no longer exists.")

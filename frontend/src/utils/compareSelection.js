@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'bricklytics_compare_property_ids';
-const MAX_PROPERTIES = 8;
+const MAX_PROPERTIES = 12;
 
 const normalizeIds = (ids) => [...new Set((ids || []).map(String).filter(Boolean))].slice(0, MAX_PROPERTIES);
 

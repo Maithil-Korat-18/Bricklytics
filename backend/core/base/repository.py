@@ -21,9 +21,10 @@ import logging
 from typing import Any, Type
 
 from mongoengine import Document
+from mongoengine.errors import ValidationError as MongoValidationError, FieldDoesNotExist
 
 from core.base.document import BaseDocument
-from core.exceptions.base import DatabaseError, ResourceNotFoundError
+from core.exceptions.base import DatabaseError, ResourceNotFoundError, ValidationError
 
 
 class BaseRepository:
@@ -82,6 +83,12 @@ class BaseRepository:
             doc.save()
             self.logger.info('%s created id=%s', self.model.__name__, doc.pk)
             return doc.to_dict()
+        except (MongoValidationError, FieldDoesNotExist) as exc:
+            self.logger.warning('Validation error creating %s: %s', self.model.__name__, exc)
+            raise ValidationError(
+                message=f'Validation error during {self.model.__name__} creation: {exc}',
+                errors={'database_validation': str(exc)}
+            ) from exc
         except Exception as exc:
             self._raise_db_error('create', exc)
 
@@ -96,6 +103,12 @@ class BaseRepository:
             return doc.to_dict()
         except ResourceNotFoundError:
             raise
+        except (MongoValidationError, FieldDoesNotExist) as exc:
+            self.logger.warning('Validation error updating %s id=%s: %s', self.model.__name__, resource_id, exc)
+            raise ValidationError(
+                message=f'Validation error during update: {exc}',
+                errors={'database_validation': str(exc)}
+            ) from exc
         except Exception as exc:
             self._raise_db_error('update', exc)
 

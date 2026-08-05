@@ -54,7 +54,7 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
     e.stopPropagation();
     const result = toggleComparePropertyId(property.id);
     if (result.limitReached) {
-      showError('Maximum 8 properties can be added to compare.');
+      showError('Maximum 12 properties can be added to compare.');
     } else {
       setIsCompared(result.isSelected);
       if (result.isSelected) {

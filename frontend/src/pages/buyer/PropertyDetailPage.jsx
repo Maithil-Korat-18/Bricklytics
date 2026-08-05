@@ -406,7 +406,7 @@ export default function PropertyDetailPage() {
     if (!property) return;
     const result = toggleComparePropertyId(property.id);
     if (result.limitReached) {
-      showError('Maximum 8 properties can be added to compare.');
+      showError('Maximum 12 properties can be added to compare.');
     } else {
       setIsCompared(result.isSelected);
       if (result.isSelected) {

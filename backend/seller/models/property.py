@@ -43,7 +43,7 @@ class Property(SellerBaseDocument):
     description = me.StringField(required=False, null=True)
     property_type = me.StringField(
         required=True,
-        choices=['apartment', 'villa', 'house', 'plot', 'commercial', 'studio']
+        choices=['apartment', 'flat', 'villa', 'house', 'plot', 'commercial', 'studio']
     )
     listing_type = me.StringField(
         required=True,
@@ -105,7 +105,7 @@ class Property(SellerBaseDocument):
     rera_number = me.StringField(required=False, null=True)
     possession_status = me.StringField(
         default='Ready',
-        choices=['Ready', 'Under Construction', 'New Launch']
+        choices=['Ready', 'Ready to Move', 'Under Construction', 'New Launch']
     )
     possession_date = me.StringField(required=False, null=True)
 

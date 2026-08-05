@@ -32,15 +32,24 @@ class PropertyCreateUpdateSerializer(BaseSerializer):
     title = serializers.CharField(max_length=200)
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     property_type = serializers.ChoiceField(
-        choices=['apartment', 'villa', 'house', 'plot', 'commercial', 'studio']
+        choices=['apartment', 'flat', 'villa', 'house', 'plot', 'commercial', 'studio']
     )
-    listing_type = serializers.CharField(default='sell', required=False)
+    listing_type = serializers.ChoiceField(
+        choices=['sell'],
+        default='sell',
+        required=False,
+    )
     sale_type = serializers.ChoiceField(
         choices=['new', 'resale'],
         default='new',
         required=False
     )
-    reconstruction_needed = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    reconstruction_needed = serializers.ChoiceField(
+        choices=['Never Renovated', 'Minor Renovation', 'Major Renovation', 'Fully Reconstructed', 'Newly Renovated', ''],
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
     price = serializers.FloatField(min_value=0.0)
     rate_per_sqft = serializers.FloatField(required=False, default=4000.0)
     bhk = serializers.IntegerField(default=2, min_value=1)
@@ -80,7 +89,11 @@ class PropertyCreateUpdateSerializer(BaseSerializer):
     builder_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     project_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     rera_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    possession_status = serializers.CharField(required=False, default='Ready')
+    possession_status = serializers.ChoiceField(
+        choices=['Ready', 'Ready to Move', 'Under Construction', 'New Launch'],
+        required=False,
+        default='Ready',
+    )
     possession_date = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     seller_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)

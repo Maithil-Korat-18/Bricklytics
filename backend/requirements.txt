@@ -37,6 +37,3 @@ PyJWT>=2.8.0
 # Development / Testing
 pytest>=8.2.0
 pytest-django>=4.8.0
-bricklytics_db_user
-Z4BDVRZ6zJUbBGjz
-mongodb+srv://bricklytics_db_user:Z4BDVRZ6zJUbBGjz@bricklytics.rqtdwok.mongodb.net/?appName=Bricklytics

@@ -83,12 +83,23 @@ class PropertyService(BaseService):
         validator.validate()
 
         amenities_data = data.pop('amenities', [])
-        amenities = [PropertyAmenity(**a) for a in amenities_data]
+        clean_amenities = []
+        for a in amenities_data:
+            if isinstance(a, PropertyAmenity):
+                clean_amenities.append(a)
+            elif isinstance(a, dict):
+                clean_amenities.append(PropertyAmenity(
+                    name=str(a.get('name', '')).strip(),
+                    category=str(a.get('category', 'General')).strip(),
+                    icon=a.get('icon')
+                ))
+            elif isinstance(a, str):
+                clean_amenities.append(PropertyAmenity(name=a.strip(), category='General'))
 
         property_data = {
             **data,
             'status': data.get('status', 'active'),
-            'amenities': amenities,
+            'amenities': clean_amenities,
             'images': [],
             'brochures': [],
             'predictions': [],
