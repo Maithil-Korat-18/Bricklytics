@@ -28,6 +28,10 @@ class GlobalErrorHandlerMiddleware:
     def __call__(self, request):
         try:
             return self.get_response(request)
+        except (BrokenPipeError, ConnectionResetError) as exc:
+            logger.warning('Client disconnected before response sent on %s %s: %s', request.method, request.path, exc)
+            from django.http import HttpResponse
+            return HttpResponse(status=499)
         except Exception as exc:
             logger.exception('Unhandled exception on %s %s: %s', request.method, request.path, exc)
             from django.http import HttpResponse

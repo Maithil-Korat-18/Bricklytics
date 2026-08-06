@@ -38,47 +38,61 @@ export default function ScheduleVisitPage() {
         const compareIds = getComparePropertyIds();
 
         const [propsRes, visitsRes, wishlistRes, compareRes] = await Promise.allSettled([
-          buyerApi.getProperties({ page_size: 50 }),
+          buyerApi.getProperties({ page_size: 100 }),
           buyerApi.getScheduledVisits(),
           buyerApi.getWishlist(),
           compareIds.length > 0 ? buyerApi.compareProperties(compareIds) : Promise.resolve({ success: true, data: [] })
         ]);
 
         let allListings = [];
-        if (propsRes.status === 'fulfilled' && propsRes.value?.data) {
-          allListings = propsRes.value.data.results || [];
+        if (propsRes.status === 'fulfilled' && propsRes.value) {
+          const val = propsRes.value;
+          allListings = Array.isArray(val.data)
+            ? val.data
+            : (val.data?.results || val.results || []);
           setMarketProperties(allListings);
         }
 
-        if (wishlistRes.status === 'fulfilled' && wishlistRes.value?.data) {
-          const wItems = wishlistRes.value.data || [];
-          // Resolve full property details for every wishlist item
-          const resolvedWishlist = await Promise.all(
-            wItems.map(async (item) => {
-              const pid = item.property_id || item.id;
-              const match = allListings.find((p) => String(p.id) === String(pid));
-              if (match) return match;
-              try {
-                const detailRes = await buyerApi.getPropertyById(pid);
-                if (detailRes?.data) return detailRes.data;
-              } catch {}
-              return { id: pid, title: item.property_title || item.title || 'Wishlist Property', price: item.price || 0 };
-            })
-          );
-          setWishlistProperties(resolvedWishlist);
+        let wProps = [];
+        if (wishlistRes.status === 'fulfilled' && wishlistRes.value) {
+          const wData = wishlistRes.value.data || wishlistRes.value || [];
+          const wItems = Array.isArray(wData) ? wData : (wData.results || []);
+          wProps = wItems.map((item) => item.property_details || item).filter(Boolean);
+          setWishlistProperties(wProps);
         }
 
-        if (compareRes.status === 'fulfilled' && compareRes.value?.data) {
-          setComparePropertiesList(compareRes.value.data || []);
+        let cProps = [];
+        if (compareRes.status === 'fulfilled' && compareRes.value) {
+          const cData = compareRes.value.data || compareRes.value || [];
+          cProps = Array.isArray(cData) ? cData : [];
+          setComparePropertiesList(cProps);
         }
 
-        if (visitsRes.status === 'fulfilled' && visitsRes.value?.data) {
-          setScheduledVisits(visitsRes.value.data);
+        if (visitsRes.status === 'fulfilled' && visitsRes.value) {
+          const vData = visitsRes.value.data || visitsRes.value || [];
+          setScheduledVisits(Array.isArray(vData) ? vData : (vData.results || []));
         }
 
         // Target initial property selection
-        const initialId = location.state?.propertyId || (allListings.length > 0 ? allListings[0].id : '');
+        const targetId = location.state?.propertyId;
+        const initialId = targetId || (allListings.length > 0 ? String(allListings[0].id) : '');
         setSelectedPropertyId(initialId);
+
+        if (targetId) {
+          const allCombined = [...allListings, ...wProps, ...cProps];
+          if (!allCombined.some((p) => String(p.id) === String(targetId))) {
+            try {
+              const singleRes = await buyerApi.getPropertyById(targetId);
+              if (singleRes?.data) {
+                const singleProp = singleRes.data;
+                setMarketProperties((prev) => [singleProp, ...prev]);
+                setSelectedProperty(singleProp);
+              }
+            } catch (err) {
+              console.warn('Could not fetch target property:', err);
+            }
+          }
+        }
       } catch (err) {
         console.error('Error loading schedule visit data:', err);
       }
@@ -223,13 +237,14 @@ export default function ScheduleVisitPage() {
               <select
                 value={selectedPropertyId}
                 onChange={handlePropertyChange}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-600"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-600 cursor-pointer"
               >
+                <option value="">-- Select a Property --</option>
                 {wishlistProperties.length > 0 && (
                   <optgroup label="⭐ Your Wishlist Properties">
                     {wishlistProperties.map((p) => (
                       <option key={`wish-${p.id}`} value={p.id}>
-                       {p.title} {p.price ? `(₹${(p.price / 100000).toFixed(1)} L)` : ''}
+                        {p.title} {p.price ? `(₹${(p.price / 100000).toFixed(1)} L)` : ''}
                       </option>
                     ))}
                   </optgroup>
@@ -239,19 +254,21 @@ export default function ScheduleVisitPage() {
                   <optgroup label="⚖️ Your Compared Properties">
                     {comparePropertiesList.map((p) => (
                       <option key={`comp-${p.id}`} value={p.id}>
-                         {p.title} (₹{(p.price / 100000).toFixed(1)} L)
+                        {p.title} {p.price ? `(₹${(p.price / 100000).toFixed(1)} L)` : ''}
                       </option>
                     ))}
                   </optgroup>
                 )}
 
-                <optgroup label="🏠 All Active Properties">
-                  {marketProperties.map((p) => (
-                    <option key={`mkt-${p.id}`} value={p.id}>
-                      {p.title} — {p.locality || 'Ahmedabad'} (₹{(p.price / 100000).toFixed(1)} L)
-                    </option>
-                  ))}
-                </optgroup>
+                {marketProperties.length > 0 && (
+                  <optgroup label="🏠 All Active Properties">
+                    {marketProperties.map((p) => (
+                      <option key={`mkt-${p.id}`} value={p.id}>
+                        {p.title} — {p.locality || 'Ahmedabad'} {p.price ? `(₹${(p.price / 100000).toFixed(1)} L)` : ''}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             </div>
 

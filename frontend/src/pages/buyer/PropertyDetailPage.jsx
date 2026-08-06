@@ -15,7 +15,7 @@ import { useToast } from '../../components/common/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROUTES } from '../../constants/routes';
 import { useWishlist } from '../../contexts/WishlistContext';
-import { isComparePropertySelected, toggleComparePropertyId } from '../../utils/compareSelection';
+import { getPropertyId, isComparePropertySelected, toggleComparePropertyId } from '../../utils/compareSelection';
 import { getPropertyMediaUrl } from '../../utils/propertyMedia';
 
 const formatCurrency = (val) => {
@@ -403,11 +403,16 @@ export default function PropertyDetailPage() {
   };
 
   const handleCompare = () => {
-    if (!property) return;
-    const result = toggleComparePropertyId(property.id);
+    const pid = getPropertyId(property);
+    if (!pid) {
+      showError('Invalid property ID.');
+      return;
+    }
+
+    const result = toggleComparePropertyId(pid);
     if (result.limitReached) {
-      showError('Maximum 12 properties can be added to compare.');
-    } else {
+      showError('You can add a maximum of 12 properties to your compare list.');
+    } else if (!result.invalid) {
       setIsCompared(result.isSelected);
       if (result.isSelected) {
         showSuccess(`Added "${property.title || 'Property'}" to compare list!`);

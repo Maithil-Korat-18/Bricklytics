@@ -26,8 +26,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--limit', type=int, default=1000,
-            help='Max number of rows to import (default: 1000)'
+            '--limit', type=int, default=500,
+            help='Max number of rows to import (default: 500)'
         )
         parser.add_argument(
             '--clear', action='store_true',

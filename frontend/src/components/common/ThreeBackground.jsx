@@ -5,7 +5,13 @@ import * as random from 'maath/random/dist/maath-random.esm';
 
 function LightStarField(props) {
   const ref = useRef();
-  const [sphere] = React.useState(() => random.inSphere(new Float32Array(2500), { radius: 1.5 }));
+  const [sphere] = React.useState(() => {
+    const data = random.inSphere(new Float32Array(2400), { radius: 1.5 });
+    for (let i = 0; i < data.length; i++) {
+      if (Number.isNaN(data[i])) data[i] = 0;
+    }
+    return data;
+  });
 
   useFrame((state, delta) => {
     if (ref.current) {

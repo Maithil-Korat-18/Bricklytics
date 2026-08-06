@@ -131,18 +131,30 @@ class BuyerService(BaseService):
 
     def compare_properties(self, property_ids: list[str]) -> list[dict]:
         self._log_operation('compare_properties', count=len(property_ids))
-        if len(property_ids) > 8:
-            raise ValidationError("You can compare up to 8 properties at a time.")
+        # Cap to max 12 properties for safety
+        property_ids = [str(pid).strip() for pid in property_ids[:12] if str(pid).strip()]
 
-        
         results = []
         for pid in property_ids:
+            pdict = None
             try:
                 pdict = self.property_repo.find_by_id(pid)
-                if pdict.get('status') == 'active':
-                    results.append(self.enrich_property(pdict))
             except Exception:
-                continue
+                pass
+
+            if not pdict:
+                try:
+                    all_active, _ = self.property_repo.filter_properties(limit=200)
+                    pdict = next((p for p in all_active if str(p.get('id')) == pid or str(p.get('_id')) == pid), None)
+                except Exception:
+                    pass
+
+            if pdict:
+                try:
+                    results.append(self.enrich_property(pdict))
+                except Exception:
+                    results.append(pdict)
+
         return results
 
     def get_better_alternatives(self, property_id: str, limit: int = 3) -> list[dict]:
@@ -168,14 +180,26 @@ class BuyerService(BaseService):
         target_price = float(target.get('price') or 0)
         target_locality = str(target.get('locality') or '').strip().lower()
 
-        # Query candidates in same property type
+        # Query candidates in same property type with score and budget filters at DB level
         filters = {
             'status': 'active',
             'property_type': target_type,
         }
+        if target_score > 0:
+            filters['investment_score__gt'] = target_score
+        if target_price > 0:
+            filters['price__gte'] = target_price * 0.70
+            filters['price__lte'] = target_price * 1.30
+
         candidates, _ = self.property_repo.filter_properties(
-            filters=filters, limit=150, sort_by='-investment_score'
+            filters=filters, limit=30, sort_by='-investment_score'
         )
+        if not candidates:
+            filters.pop('price__gte', None)
+            filters.pop('price__lte', None)
+            candidates, _ = self.property_repo.filter_properties(
+                filters=filters, limit=30, sort_by='-investment_score'
+            )
 
         scored_alternatives = []
         for c in candidates:

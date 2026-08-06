@@ -70,6 +70,12 @@ class BuyerPropertyListView(BaseAPIView):
             filters['price__gte'] = float(request.query_params.get('min_price'))
         if request.query_params.get('max_price'):
             filters['price__lte'] = float(request.query_params.get('max_price'))
+        min_score = request.query_params.get('min_investment_score')
+        if min_score:
+            try:
+                filters['investment_score__gte'] = int(min_score)
+            except ValueError:
+                pass
 
         buyer_svc = BuyerService()
 
@@ -82,14 +88,6 @@ class BuyerPropertyListView(BaseAPIView):
         )
 
         enriched_results = [buyer_svc.enrich_property(p) for p in results]
-
-        min_score = request.query_params.get('min_investment_score')
-        if min_score:
-            try:
-                min_score_val = int(min_score)
-                enriched_results = [p for p in enriched_results if p.get('investment_score', 0) >= min_score_val]
-            except ValueError:
-                pass
 
         serialized = PropertyResponseSerializer(enriched_results, many=True).data
         return paginated_response(

@@ -1,12 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Logo from '../common/Logo';
 import { ROUTES } from '../../constants/routes';
+import { getComparePropertyIds } from '../../utils/compareSelection';
 
 export default function Header() {
   const navigate = useNavigate();
   const { isAuthenticated, role, logout } = useAuth();
+  const [compareCount, setCompareCount] = useState(() => getComparePropertyIds().length);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setCompareCount(getComparePropertyIds().length);
+    };
+    window.addEventListener('bricklytics_compare_updated', handleUpdate);
+    return () => window.removeEventListener('bricklytics_compare_updated', handleUpdate);
+  }, []);
 
   const dashboardPath = role === 'seller' ? ROUTES.SELLER_DASHBOARD : ROUTES.BUYER_DASHBOARD;
 
@@ -25,7 +35,14 @@ export default function Header() {
         <nav className="hidden md:flex items-center space-x-8 text-sm font-semibold text-slate-600">
           <Link to="/" className="hover:text-blue-600 transition-colors">Home</Link>
           <Link to={ROUTES.PROPERTIES} className="hover:text-blue-600 transition-colors">Properties</Link>
-          <Link to={ROUTES.COMPARE} className="hover:text-blue-600 transition-colors">Compare</Link>
+          <Link to={ROUTES.COMPARE} className="hover:text-blue-600 transition-colors flex items-center gap-1.5">
+            <span>Compare</span>
+            {compareCount > 0 && (
+              <span className="px-1.5 py-0.5 text-[10px] font-extrabold text-white bg-blue-600 rounded-full leading-none">
+                {compareCount}
+              </span>
+            )}
+          </Link>
           {isAuthenticated && (
             <Link to={dashboardPath} className="hover:text-blue-600 transition-colors">Dashboard</Link>
           )}

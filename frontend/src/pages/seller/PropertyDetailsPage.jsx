@@ -186,15 +186,7 @@ export default function PropertyDetailsPage() {
           </div>
 
           <div className="flex flex-wrap gap-2.5 shrink-0">
-            <Link
-              to={getPropertyDetailsPath(property.id)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs transition"
-            >
-              <ExternalLink className="h-4 w-4 text-blue-600" />
-              Preview Buyer View
-            </Link>
+            
 
             <Link
               to={getEditPropertyPath(property.id)}

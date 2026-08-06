@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authApi } from '../services/authApi';
+import { clearCompareSelection } from '../utils/compareSelection';
 
 const AuthContext = createContext(null);
 
@@ -44,6 +45,7 @@ export function AuthProvider({ children }) {
     const res = await authApi.login({ email, password });
     if (res.success && res.data?.token) {
       localStorage.setItem('auth_token', res.data.token);
+      clearCompareSelection();
       setToken(res.data.token);
       setUser(res.data.user);
       return res.data;
@@ -53,6 +55,7 @@ export function AuthProvider({ children }) {
 
   const signup = async (userData) => {
     const res = await authApi.signup(userData);
+    clearCompareSelection();
     return res;
   };
 
@@ -60,6 +63,7 @@ export function AuthProvider({ children }) {
     const res = await authApi.verifyEmail({ email, code });
     if (res.success && res.data?.token) {
       localStorage.setItem('auth_token', res.data.token);
+      clearCompareSelection();
       setToken(res.data.token);
       setUser(res.data.user);
     }
@@ -67,8 +71,11 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await authApi.logout();
+    try {
+      await authApi.logout();
+    } catch {}
     localStorage.removeItem('auth_token');
+    clearCompareSelection();
     setToken(null);
     setUser(null);
   };

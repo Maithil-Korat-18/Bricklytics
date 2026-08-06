@@ -5,7 +5,7 @@ import { buyerApi } from '../../services/buyerApi';
 import { useToast } from '../../components/common/ToastContext';
 import { getPropertyDetailsPath } from '../../constants/routes';
 import { getPropertyMediaUrl } from '../../utils/propertyMedia';
-import { getComparePropertyIds, removeComparePropertyId, saveComparePropertyIds } from '../../utils/compareSelection';
+import { clearCompareSelection, getComparePropertyIds, getPropertyId, removeComparePropertyId, saveComparePropertyIds } from '../../utils/compareSelection';
 
 const formatCurrency = (value) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return 'Not specified';
@@ -49,14 +49,14 @@ function ComparisonTable({ title, properties, rows }) {
         <div className="comparison-table-content" style={{ minWidth: `${tableMinWidth}px` }}>
           <div className="grid bg-inverse-surface px-4 py-3 text-[11px] font-mono uppercase tracking-wide text-inverse-on-surface" style={gridStyle}>
             <div>Comparison item</div>
-            {properties.map((property) => <div key={property.id} className="truncate px-2">{property.title}</div>)}
+            {properties.map((property) => <div key={getPropertyId(property) || property.title} className="truncate px-2">{property.title}</div>)}
           </div>
 
           {rows.map((row, index) => (
             <div key={row.label} className={`grid items-center px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-surface-container-low/50' : ''}`} style={gridStyle}>
               <div className="font-semibold text-on-surface-variant">{row.label}</div>
               {properties.map((property, propertyIndex) => (
-                <div key={property.id} className={`px-2 font-mono text-on-surface ${row.bestIndex === propertyIndex ? 'font-bold text-tertiary' : ''}`}>
+                <div key={getPropertyId(property) || propertyIndex} className={`px-2 font-mono text-on-surface ${row.bestIndex === propertyIndex ? 'font-bold text-tertiary' : ''}`}>
                   {row.render(property)}
                   {row.bestIndex === propertyIndex && (
                     <span className="ml-2 rounded-full bg-tertiary px-1.5 py-0.5 font-sans text-[10px] text-white">
@@ -74,17 +74,46 @@ function ComparisonTable({ title, properties, rows }) {
 }
 
 export default function ComparePropertiesPage() {
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [properties, setProperties] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [marketProperties, setMarketProperties] = useState([]);
 
+  // Fetch all active market properties for the dropdown selector
   useEffect(() => {
-    const urlIds = (searchParams.get('ids') || '').split(',').map((id) => id.trim()).filter(Boolean);
+    async function fetchMarket() {
+      try {
+        const res = await buyerApi.getProperties({ page_size: 100 });
+        const list = Array.isArray(res?.data) ? res.data : (res?.data?.results || res?.results || []);
+        const normalizedList = list.map((p) => ({ ...p, id: getPropertyId(p) || p.id }));
+        setMarketProperties(normalizedList);
+      } catch (e) {
+        console.error('Failed to load market properties for compare selector:', e);
+      }
+    }
+    fetchMarket();
+  }, []);
+
+  // Sync selectedIds from URL or localStorage
+  useEffect(() => {
+    const urlIds = (searchParams.get('ids') || '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean);
     const ids = saveComparePropertyIds([...getComparePropertyIds(), ...urlIds]);
     setSelectedIds(ids);
   }, [searchParams]);
+
+  // Listen for custom compare event across components
+  useEffect(() => {
+    const handleCompareUpdated = () => {
+      setSelectedIds(getComparePropertyIds());
+    };
+    window.addEventListener('bricklytics_compare_updated', handleCompareUpdated);
+    return () => window.removeEventListener('bricklytics_compare_updated', handleCompareUpdated);
+  }, []);
 
   useEffect(() => {
     async function loadComparison() {
@@ -94,23 +123,86 @@ export default function ComparePropertiesPage() {
       }
       setComparisonLoading(true);
       try {
-        const response = await buyerApi.compareProperties(selectedIds);
-        const results = response.success ? response.data || [] : [];
-        const resultById = new Map(results.map((property) => [String(property.id), property]));
-        setProperties(selectedIds.map((id) => resultById.get(String(id))).filter(Boolean));
-      } catch {
-        setProperties([]);
-        showError('Failed to load the selected properties.');
+        const response = await buyerApi.compareProperties(selectedIds.slice(0, 12));
+        const results = response.success ? response.data || [] : (response.data || []);
+        let fetchedList = Array.isArray(results) ? results : [];
+
+        const marketMap = new Map();
+        (marketProperties || []).forEach((p) => {
+          const pid = getPropertyId(p);
+          if (pid) marketMap.set(pid, { ...p, id: pid });
+        });
+
+        const fetchedMap = new Map();
+        fetchedList.forEach((p) => {
+          const pid = getPropertyId(p);
+          if (pid) fetchedMap.set(pid, { ...p, id: pid });
+        });
+
+        const finalProperties = selectedIds
+          .map((id) => fetchedMap.get(id) || marketMap.get(id))
+          .filter(Boolean);
+
+        setProperties(finalProperties);
+
+        const validIds = finalProperties.map((p) => getPropertyId(p)).filter(Boolean);
+        if (validIds.length !== selectedIds.length) {
+          saveComparePropertyIds(validIds);
+          setSelectedIds(validIds);
+        }
+      } catch (err) {
+        console.error("Error loading comparison:", err);
+        const marketMap = new Map();
+        (marketProperties || []).forEach((p) => {
+          const pid = getPropertyId(p);
+          if (pid) marketMap.set(pid, { ...p, id: pid });
+        });
+        const fallback = selectedIds.map((id) => marketMap.get(id)).filter(Boolean);
+        setProperties(fallback);
+        if (fallback.length === 0 && selectedIds.length > 0) {
+          showError('Failed to load the selected properties.');
+        }
       } finally {
         setComparisonLoading(false);
       }
     }
     loadComparison();
-  }, [selectedIds, showError]);
+  }, [selectedIds, marketProperties, showError]);
 
-  const removeProperty = (propertyId) => {
-    const ids = removeComparePropertyId(propertyId);
+  const removeProperty = (propertyOrId) => {
+    const pid = getPropertyId(propertyOrId);
+    if (!pid) return;
+    const ids = removeComparePropertyId(pid);
+    setSelectedIds(ids);
     setSearchParams(ids.length ? { ids: ids.join(',') } : {});
+    window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
+  };
+
+  const handleAddPropertySelect = (e) => {
+    const pid = e.target.value;
+    if (!pid) return;
+    const current = getComparePropertyIds();
+    if (current.includes(String(pid))) return;
+    if (current.length >= 12) {
+      showError('You can add a maximum of 12 properties to your compare list.');
+      e.target.value = '';
+      return;
+    }
+    const newIds = saveComparePropertyIds([...current, String(pid)]);
+    setSelectedIds(newIds);
+    e.target.value = '';
+    showSuccess('Property added to comparison table!');
+    window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
+  };
+
+  const handlePrefillTopProperties = () => {
+    if (marketProperties.length > 0) {
+      const topIds = marketProperties.slice(0, 3).map((p) => getPropertyId(p)).filter(Boolean);
+      const ids = saveComparePropertyIds(topIds);
+      setSelectedIds(ids);
+      showSuccess('Pre-filled top market properties for comparison.');
+      window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
+    }
   };
 
   const recommended = useMemo(() => {
@@ -259,6 +351,14 @@ export default function ComparePropertiesPage() {
     return nearbyPlacesFor(property).some((place) => nearbyCategory(place) === targetCategory);
   };
 
+  const handleClearAll = () => {
+    clearCompareSelection();
+    setSelectedIds([]);
+    setProperties([]);
+    setSearchParams({});
+    showSuccess('Cleared comparison list.');
+  };
+
   return (
     <div id="comparison-export" className="space-y-8 animate-fadeIn">
       <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -266,10 +366,50 @@ export default function ComparePropertiesPage() {
           <h1 className="font-headline-lg text-on-surface flex items-center gap-2"><SlidersHorizontal className="h-6 w-6 text-primary" />Compare Properties</h1>
           <p className="mt-1 text-body-md text-secondary">Compare the selected Bricklytics projects using their real listing and AI analysis data.</p>
         </div>
-        <div className="print-hide flex gap-2">
+        <div className="print-hide flex items-center gap-2">
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleClearAll}
+              className="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-100 transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear All ({selectedIds.length})
+            </button>
+          )}
           <button onClick={() => window.print()} className="hidden items-center gap-1.5 rounded-full bg-inverse-surface px-4 py-2 text-xs font-bold text-white hover:opacity-90 sm:flex"><Download className="h-3.5 w-3.5" />Export PDF</button>
         </div>
       </header>
+
+      {/* Property Selector Bar */}
+      <div className="print-hide flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200/80 bg-white shadow-card-soft">
+        <div className="flex-1 flex items-center gap-3">
+          <label className="text-xs font-bold text-slate-700 uppercase tracking-wider whitespace-nowrap">
+            + Add Property to Compare:
+          </label>
+          <select
+            onChange={handleAddPropertySelect}
+            defaultValue=""
+            className="flex-1 max-w-md px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-600 cursor-pointer"
+          >
+            <option value="">-- Choose a property from market --</option>
+            {marketProperties
+              .filter((p) => !selectedIds.includes(String(p.id)))
+              .map((p) => (
+                <option key={`opt-${p.id}`} value={p.id}>
+                  {p.title} — {p.locality || 'Ahmedabad'} (₹{(p.price / 100000).toFixed(1)} L)
+                </option>
+              ))}
+          </select>
+        </div>
+        {selectedIds.length === 0 && (
+          <button
+            onClick={handlePrefillTopProperties}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all whitespace-nowrap"
+          >
+            ⚡ Compare Top 3 Properties
+          </button>
+        )}
+      </div>
 
       {comparisonLoading ? (
         <div className="h-80 rounded-xl border border-outline-variant/50 bg-surface-container-low animate-pulse" />

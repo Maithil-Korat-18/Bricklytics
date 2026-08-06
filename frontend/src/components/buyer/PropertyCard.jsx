@@ -6,17 +6,27 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getPropertyDetailsPath } from '../../constants/routes';
 import { getPropertyMediaUrl } from '../../utils/propertyMedia';
 import { useWishlist } from '../../contexts/WishlistContext';
-import { isComparePropertySelected, toggleComparePropertyId } from '../../utils/compareSelection';
+import { getPropertyId, isComparePropertySelected, toggleComparePropertyId } from '../../utils/compareSelection';
 
 export default function PropertyCard({ property, isFavoriteInitial = false, onFavoriteToggle, showCompare = false }) {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { showSuccess, showError, showInfo } = useToast();
   const [favLoading, setFavLoading] = useState(false);
-  const [isCompared, setIsCompared] = useState(() => isComparePropertySelected(property.id));
+  const [isCompared, setIsCompared] = useState(() => isComparePropertySelected(property));
   const { favoriteIds, loading: wishlistLoading, toggleFavorite } = useWishlist();
 
-  const isFavorite = wishlistLoading ? isFavoriteInitial : favoriteIds.has(String(property.id));
+  const propId = getPropertyId(property);
+
+  React.useEffect(() => {
+    const handleUpdate = () => {
+      setIsCompared(isComparePropertySelected(property));
+    };
+    window.addEventListener('bricklytics_compare_updated', handleUpdate);
+    return () => window.removeEventListener('bricklytics_compare_updated', handleUpdate);
+  }, [property]);
+
+  const isFavorite = wishlistLoading ? isFavoriteInitial : favoriteIds.has(String(propId));
 
   const coverImage = property.images?.find((img) => img.is_cover)?.url ||
     property.images?.[0]?.url ||
@@ -39,9 +49,9 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
 
     setFavLoading(true);
     try {
-      const res = await toggleFavorite(property.id);
+      const res = await toggleFavorite(propId);
       showSuccess(res.message);
-      if (onFavoriteToggle) onFavoriteToggle(property.id, res.inWishlist);
+      if (onFavoriteToggle) onFavoriteToggle(propId, res.inWishlist);
     } catch (err) {
       showError('Failed to update wishlist.');
     } finally {
@@ -52,10 +62,15 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
   const handleCompareClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const result = toggleComparePropertyId(property.id);
+    if (!propId) {
+      showError('Invalid property ID.');
+      return;
+    }
+
+    const result = toggleComparePropertyId(propId);
     if (result.limitReached) {
-      showError('Maximum 12 properties can be added to compare.');
-    } else {
+      showError('You can add a maximum of 12 properties to your compare list.');
+    } else if (!result.invalid) {
       setIsCompared(result.isSelected);
       if (result.isSelected) {
         showSuccess(`Added "${property.title || 'Property'}" to compare list!`);
