@@ -346,36 +346,6 @@ export default function PropertyListingPage() {
             </button>
           </div>
         )}
-
-        {/* Floating Compare Bar */}
-        {compareCount > 0 && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-slate-700 animate-fadeIn">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-blue-600 font-extrabold text-xs flex items-center justify-center text-white">
-                {compareCount}
-              </span>
-              <span className="text-xs font-bold text-slate-200">
-                {compareCount === 1 ? 'Property selected for comparison' : 'Properties selected for comparison'}
-              </span>
-            </div>
-            <button
-              onClick={() => navigate(ROUTES.COMPARE)}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm cursor-pointer"
-            >
-              Compare Now
-            </button>
-            <button
-              onClick={async () => {
-                await clearCompareSelection();
-                setCompareCount(0);
-              }}
-              className="p-1.5 text-slate-400 hover:text-white transition cursor-pointer"
-              title="Clear comparison list"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
       </main>
     </div>
   );
