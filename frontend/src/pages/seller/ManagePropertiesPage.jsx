@@ -7,7 +7,7 @@ import { useToast } from '../../components/common/ToastContext';
 import PageHeader from '../../components/common/PageHeader';
 import ContentContainer from '../../components/common/ContentContainer';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
-import { getPropertyMediaUrl } from '../../utils/propertyMedia';
+import { getPropertyMediaUrl, getPropertyCoverImage } from '../../utils/propertyMedia';
 
 import {
   Search,
@@ -260,14 +260,14 @@ export default function ManagePropertiesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {properties.map((prop) => {
-            const coverImage = prop.images?.find((img) => img.is_cover)?.url || prop.images?.[0]?.url;
+            const coverImage = getPropertyCoverImage(prop);
             return (
               <div key={prop.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-all duration-300 group flex flex-col justify-between">
                 <div>
                   <div className="relative h-48 w-full overflow-hidden bg-slate-100 flex items-center justify-center">
                     {coverImage ? (
                       <img
-                        src={getPropertyMediaUrl(coverImage)}
+                        src={coverImage}
                         alt={prop.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />

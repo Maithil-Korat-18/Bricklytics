@@ -2,6 +2,7 @@
 seller/repositories/property_repository.py — Data Access Layer for Properties
 """
 
+from mongoengine import Q
 from core.base.repository import BaseRepository
 from seller.models.property import Property
 from core.exceptions.base import DatabaseError
@@ -37,15 +38,25 @@ class PropertyRepository(BaseRepository):
                             clean_filters['property_type__in'] = ['apartment', 'flat', 'Flat / Apartment', 'flat / apartment']
                         else:
                             clean_filters[k] = v
+                    elif k == 'bhk' and str(v) == '5':
+                        # Handle 5+ BHK filter selection
+                        clean_filters['bhk__gte'] = 5
                     else:
                         clean_filters[k] = v
 
                 if clean_filters:
                     qs = qs.filter(**clean_filters)
 
-
-            if search_query:
-                qs = qs.filter(title__icontains=search_query)
+            if search_query and str(search_query).strip():
+                sq = str(search_query).strip()
+                qs = qs.filter(
+                    Q(title__icontains=sq) |
+                    Q(locality__icontains=sq) |
+                    Q(address__icontains=sq) |
+                    Q(city__icontains=sq) |
+                    Q(project_name__icontains=sq) |
+                    Q(builder_name__icontains=sq)
+                )
 
             total_count = qs.count()
 
@@ -57,3 +68,4 @@ class PropertyRepository(BaseRepository):
 
         except Exception as exc:
             self._raise_db_error('filter_properties', exc)
+

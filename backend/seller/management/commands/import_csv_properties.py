@@ -27,21 +27,41 @@ POSSIBLE_CSV_PATHS = [
     os.path.join(settings.BASE_DIR, 'property_location_amenities.csv'),
 ]
 
-APARTMENT_IMAGES = [
+APARTMENT_NEW_IMAGES = [
     "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1200",
     "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=1200",
+    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1200",
+    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200",
+    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200",
+    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1200",
+]
+
+APARTMENT_RESALE_IMAGES = [
     "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=1200",
     "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=1200",
     "https://images.unsplash.com/photo-1620626011761-996317b8d101?q=80&w=1200",
-    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200",
-    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200",
+    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1200",
+    "https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1200",
 ]
 
-VILLA_IMAGES = [
+VILLA_NEW_IMAGES = [
     "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200",
-    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1200",
     "https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=1200",
     "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?q=80&w=1200",
+    "https://images.unsplash.com/photo-1600607687644-c7171b42498b?q=80&w=1200",
+]
+
+VILLA_RESALE_IMAGES = [
+    "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200",
+    "https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=1200",
+    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1200",
+    "https://images.unsplash.com/photo-1576941089067-2de3c901e126?q=80&w=1200",
+]
+
+COMMERCIAL_IMAGES = [
+    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200",
+    "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1200",
+    "https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=1200",
 ]
 
 PLOT_IMAGES = [
@@ -55,8 +75,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--limit', type=int, default=3000,
-            help='Max number of rows to import (default: 3000)'
+            '--limit', type=int, default=2000,
+            help='Max number of rows to import (default: 2000)'
         )
         parser.add_argument(
             '--clear', action='store_true',
@@ -100,6 +120,8 @@ class Command(BaseCommand):
         imported = 0
         skipped = 0
         errors = 0
+        batch = []
+        batch_size = 250
 
         with open(csv_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
@@ -140,8 +162,12 @@ class Command(BaseCommand):
                         p_type = 'villa'
                     elif any(k in raw_type for k in ['plot', 'land']):
                         p_type = 'plot'
+                    elif any(k in raw_type for k in ['commercial', 'office', 'shop', 'retail']):
+                        p_type = 'commercial'
                     else:
                         p_type = 'apartment'
+
+                    sale_type = 'new' if price_cr < 1.5 else 'resale'
 
                     # Amenities
                     amenities = []
@@ -160,8 +186,16 @@ class Command(BaseCommand):
                     for am in ['24/7 Security', 'Power Backup', 'Covered Parking', 'Elevators']:
                         amenities.append(PropertyAmenity(name=am, category='General'))
 
-                    # Images
-                    img_pool = VILLA_IMAGES if p_type == 'villa' else (PLOT_IMAGES if p_type == 'plot' else APARTMENT_IMAGES)
+                    # Select curated photos strictly matching property_type and sale_type
+                    if p_type == 'villa':
+                        img_pool = VILLA_NEW_IMAGES if sale_type == 'new' else VILLA_RESALE_IMAGES
+                    elif p_type == 'plot':
+                        img_pool = PLOT_IMAGES
+                    elif p_type == 'commercial':
+                        img_pool = COMMERCIAL_IMAGES
+                    else:
+                        img_pool = APARTMENT_NEW_IMAGES if sale_type == 'new' else APARTMENT_RESALE_IMAGES
+
                     selected_imgs = [
                         PropertyImage(
                             id=f'img_{imported}_{idx}',
@@ -169,7 +203,7 @@ class Command(BaseCommand):
                             file_path=img_pool[(imported + idx) % len(img_pool)],
                             is_cover=(idx == 0),
                             caption=f'{property_name} View {idx + 1}'
-                        ) for idx in range(3)
+                        ) for idx in range(min(3, len(img_pool)))
                     ]
 
                     # Precompute v5 AI predictions
@@ -193,7 +227,7 @@ class Command(BaseCommand):
                                     f'Excellent connectivity to schools, healthcare, and city transport.',
                         property_type=p_type,
                         listing_type='sell',
-                        sale_type='new' if price_cr < 1.5 else 'resale',
+                        sale_type=sale_type,
                         price=price_inr,
                         rate_per_sqft=rate_per_sqft,
                         bhk=bhk,
@@ -245,10 +279,12 @@ class Command(BaseCommand):
                         appreciation_methodology=appr.get('methodology'),
                         prediction_timestamp=datetime.now(timezone.utc),
                     )
-                    prop.save()
+                    batch.append(prop)
                     imported += 1
 
-                    if imported % 250 == 0:
+                    if len(batch) >= batch_size:
+                        Property.objects.insert(batch, load_bulk=False)
+                        batch = []
                         self.stdout.write(f'  Successfully imported and enriched {imported}/{limit} properties...')
 
                 except Exception as e:
@@ -256,7 +292,11 @@ class Command(BaseCommand):
                     if errors <= 5:
                         self.stderr.write(f'  Error on row {imported}: {e}')
 
+        if batch:
+            Property.objects.insert(batch, load_bulk=False)
+            self.stdout.write(f'  Successfully imported and enriched {imported}/{limit} properties...')
+
         self.stdout.write(self.style.SUCCESS(
-            f'\n[OK] Import complete: {imported} imported & enriched with v5 predictions, '
+            f'\n[OK] Bulk Import complete: {imported} imported & enriched with v5 predictions, '
             f'{skipped} skipped, {errors} errors.'
         ))

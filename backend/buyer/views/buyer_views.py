@@ -251,16 +251,86 @@ class PropertyCompareView(BaseAPIView):
         super().__init__(**kwargs)
         self.service = BuyerService()
 
-    def post(self, request):
-        property_ids = request.data.get('property_ids', [])
-        if not isinstance(property_ids, list) or not property_ids:
-            raise ValidationError("property_ids must be a non-empty array of property IDs.")
+    def get(self, request):
+        is_auth = bool(request.user and getattr(request.user, 'is_authenticated', False))
+        if is_auth:
+            res = self.service.get_user_compare_properties(str(request.user.id))
+            serialized_props = PropertyResponseSerializer(res['properties'], many=True).data
+            return self.success_response(
+                data={
+                    'property_ids': res['property_ids'],
+                    'properties': serialized_props,
+                },
+                message="Compare list fetched successfully."
+            )
+        else:
+            raw_ids = request.query_params.get('property_ids', '')
+            ids = [i.strip() for i in raw_ids.split(',') if i.strip()] if raw_ids else []
+            compared = self.service.compare_properties(ids)
+            serialized_props = PropertyResponseSerializer(compared, many=True).data
+            return self.success_response(
+                data={
+                    'property_ids': ids,
+                    'properties': serialized_props,
+                },
+                message="Properties compared successfully."
+            )
 
-        compared = self.service.compare_properties(property_ids)
+    def post(self, request):
+        single_id = request.data.get('property_id')
+        property_ids = request.data.get('property_ids')
+        is_auth = bool(request.user and getattr(request.user, 'is_authenticated', False))
+
+        if is_auth:
+            user_id = str(request.user.id)
+            if single_id:
+                res = self.service.add_to_compare(user_id, str(single_id))
+            elif isinstance(property_ids, list):
+                res = self.service.sync_user_compare(user_id, property_ids)
+            else:
+                res = self.service.get_user_compare_properties(user_id)
+
+            serialized_props = PropertyResponseSerializer(res['properties'], many=True).data
+            return self.success_response(
+                data={
+                    'property_ids': res['property_ids'],
+                    'properties': serialized_props,
+                },
+                message="Compare list updated successfully."
+            )
+        else:
+            ids = property_ids if isinstance(property_ids, list) else ([str(single_id)] if single_id else [])
+            compared = self.service.compare_properties(ids)
+            serialized_props = PropertyResponseSerializer(compared, many=True).data
+            return self.success_response(
+                data={
+                    'property_ids': ids,
+                    'properties': serialized_props,
+                },
+                message="Properties compared successfully."
+            )
+
+    def delete(self, request):
+        is_auth = bool(request.user and getattr(request.user, 'is_authenticated', False))
+        if not is_auth:
+            return self.success_response(data={'property_ids': [], 'properties': []}, message="Cleared.")
+
+        user_id = str(request.user.id)
+        pid = request.query_params.get('property_id') or request.data.get('property_id')
+        if pid:
+            res = self.service.remove_from_compare(user_id, str(pid))
+        else:
+            res = self.service.clear_compare(user_id)
+
+        serialized_props = PropertyResponseSerializer(res['properties'], many=True).data
         return self.success_response(
-            data=PropertyResponseSerializer(compared, many=True).data,
-            message="Properties compared successfully."
+            data={
+                'property_ids': res['property_ids'],
+                'properties': serialized_props,
+            },
+            message="Compare list updated successfully."
         )
+
 
 
 class RecentlyViewedView(BaseAPIView):

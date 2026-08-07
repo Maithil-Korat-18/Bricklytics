@@ -21,16 +21,5 @@
     "requires_reconstruction": -8.0,
     "needs renovation": -8.0,
     "needs_renovation": -8.0
-  },
-  "facing_direction": {
-    "east": 2.0,
-    "north": 2.0,
-    "north-east": 2.0,
-    "northeast": 2.0,
-    "ne": 2.0,
-    "west": 0.0,
-    "w": 0.0,
-    "south": -2.0,
-    "s": -2.0
   }
 }

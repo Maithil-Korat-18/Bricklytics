@@ -16,7 +16,7 @@ import Step2PropertyDetails from '../../components/seller/wizard/Step2PropertyDe
 import Step3PricingImages from '../../components/seller/wizard/Step3PricingImages';
 
 import { CheckCircle, AlertTriangle, RefreshCw, Trash2, Star } from 'lucide-react';
-import { getPropertyMediaUrl } from '../../utils/propertyMedia';
+import { getPropertyMediaUrl, getPropertyImages } from '../../utils/propertyMedia';
 
 
 const AHMEDABAD_LOCALITIES = [
@@ -403,13 +403,13 @@ export default function EditPropertyPage() {
           )}
 
           {/* Existing Backend Uploaded Images Gallery */}
-          {propertyData?.images && propertyData.images.length > 0 && (
+          {getPropertyImages(propertyData).length > 0 && (
             <div className="bg-white border border-[#e2e7ff] rounded-2xl p-6 space-y-4 shadow-ambient">
               <h3 className="text-md font-bold text-[#131b2e]">Saved Images Gallery</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {propertyData.images.map((img) => (
-                  <div key={img.id} className="relative group rounded-xl overflow-hidden border border-[#e2e7ff] aspect-video bg-[#f2f3ff]">
-                    <img src={getPropertyMediaUrl(img.url)} alt="Property" className="w-full h-full object-cover" />
+                {getPropertyImages(propertyData).map((img, idx) => (
+                  <div key={img.id || idx} className="relative group rounded-xl overflow-hidden border border-[#e2e7ff] aspect-video bg-[#f2f3ff]">
+                    <img src={img.url} alt="Property" className="w-full h-full object-cover" />
                     {img.is_cover ? (
                       <span className="absolute top-2 left-2 bg-[#0058be] text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                         <Star className="w-3 h-3 fill-current" /> Cover

@@ -24,7 +24,7 @@ import Badge from '../../components/common/Badge';
 import { useToast } from '../../components/common/ToastContext';
 import { ROUTES, getEditPropertyPath, getPropertyDetailsPath } from '../../constants/routes';
 import { propertyApi } from '../../services/propertyApi';
-import { getPropertyMediaUrl } from '../../utils/propertyMedia';
+import { getPropertyMediaUrl, getPropertyImages, getPropertyCoverImage, DEFAULT_PROPERTY_PLACEHOLDER } from '../../utils/propertyMedia';
 
 // Converts a raw numeric price into Indian Cr / Lakh notation.
 const formatPrice = (value) => {
@@ -132,8 +132,8 @@ export default function PropertyDetailsPage() {
     );
   }
 
-  const imagesList = property?.images || [];
-  const coverImage = property?.images?.find((image) => image.is_cover)?.url || property?.images?.[0]?.url;
+  const imagesList = getPropertyImages(property);
+  const coverImage = getPropertyCoverImage(property) || DEFAULT_PROPERTY_PLACEHOLDER;
   const activeImage = imagesList[activeImageIdx]?.url || coverImage;
   const performance = property.performance || {};
 
@@ -216,7 +216,7 @@ export default function PropertyDetailsPage() {
             <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-900 shadow-card-soft">
               {activeImage ? (
                 <img
-                  src={getPropertyMediaUrl(activeImage)}
+                  src={activeImage}
                   alt={property.title}
                   className="h-[380px] sm:h-[420px] w-full object-cover"
                 />
@@ -247,7 +247,7 @@ export default function PropertyDetailsPage() {
                     }`}
                   >
                     <img
-                      src={getPropertyMediaUrl(img.url)}
+                      src={img.url}
                       alt={`Thumb ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />

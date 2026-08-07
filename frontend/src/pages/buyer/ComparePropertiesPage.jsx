@@ -4,8 +4,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { buyerApi } from '../../services/buyerApi';
 import { useToast } from '../../components/common/ToastContext';
 import { getPropertyDetailsPath } from '../../constants/routes';
-import { getPropertyMediaUrl } from '../../utils/propertyMedia';
-import { clearCompareSelection, getComparePropertyIds, getPropertyId, removeComparePropertyId, saveComparePropertyIds } from '../../utils/compareSelection';
+import { getPropertyMediaUrl, getPropertyCoverImage, DEFAULT_PROPERTY_PLACEHOLDER } from '../../utils/propertyMedia';
+import { addComparePropertyId, clearCompareSelection, getComparePropertyIds, getPropertyId, removeComparePropertyId, saveComparePropertyIds, syncCompareWithBackend } from '../../utils/compareSelection';
+import { normalizeAmenities, normalizeAmenityName } from '../../utils/amenityNormalizer';
 
 const formatCurrency = (value) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return 'Not specified';
@@ -96,15 +97,24 @@ export default function ComparePropertiesPage() {
     fetchMarket();
   }, []);
 
-  // Sync selectedIds from URL or localStorage
+  // Sync selectedIds from DB, URL or localStorage on initial mount
   useEffect(() => {
-    const urlIds = (searchParams.get('ids') || '')
-      .split(',')
-      .map((id) => id.trim())
-      .filter(Boolean);
-    const ids = saveComparePropertyIds([...getComparePropertyIds(), ...urlIds]);
-    setSelectedIds(ids);
-  }, [searchParams]);
+    async function initIds() {
+      await syncCompareWithBackend();
+      const urlIds = (searchParams.get('ids') || '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+      if (urlIds.length > 0) {
+        for (const id of urlIds) {
+          await addComparePropertyId(id);
+        }
+      }
+      setSelectedIds(getComparePropertyIds());
+    }
+    initIds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Listen for custom compare event across components
   useEffect(() => {
@@ -124,7 +134,8 @@ export default function ComparePropertiesPage() {
       setComparisonLoading(true);
       try {
         const response = await buyerApi.compareProperties(selectedIds.slice(0, 12));
-        const results = response.success ? response.data || [] : (response.data || []);
+        const rawData = response?.data;
+        const results = rawData?.properties || (Array.isArray(rawData) ? rawData : []);
         let fetchedList = Array.isArray(results) ? results : [];
 
         const marketMap = new Map();
@@ -140,15 +151,16 @@ export default function ComparePropertiesPage() {
         });
 
         const finalProperties = selectedIds
-          .map((id) => fetchedMap.get(id) || marketMap.get(id))
+          .map((id) => {
+            const cleanId = getPropertyId(id);
+            return cleanId ? (fetchedMap.get(cleanId) || marketMap.get(cleanId)) : null;
+          })
           .filter(Boolean);
 
-        setProperties(finalProperties);
-
-        const validIds = finalProperties.map((p) => getPropertyId(p)).filter(Boolean);
-        if (validIds.length !== selectedIds.length) {
-          saveComparePropertyIds(validIds);
-          setSelectedIds(validIds);
+        if (finalProperties.length === 0 && fetchedList.length > 0) {
+          setProperties(fetchedList.map((p) => ({ ...p, id: getPropertyId(p) || p.id })));
+        } else {
+          setProperties(finalProperties);
         }
       } catch (err) {
         console.error("Error loading comparison:", err);
@@ -157,7 +169,9 @@ export default function ComparePropertiesPage() {
           const pid = getPropertyId(p);
           if (pid) marketMap.set(pid, { ...p, id: pid });
         });
-        const fallback = selectedIds.map((id) => marketMap.get(id)).filter(Boolean);
+        const fallback = selectedIds
+          .map((id) => marketMap.get(getPropertyId(id)))
+          .filter(Boolean);
         setProperties(fallback);
         if (fallback.length === 0 && selectedIds.length > 0) {
           showError('Failed to load the selected properties.');
@@ -169,16 +183,17 @@ export default function ComparePropertiesPage() {
     loadComparison();
   }, [selectedIds, marketProperties, showError]);
 
-  const removeProperty = (propertyOrId) => {
+  const removeProperty = async (propertyOrId) => {
     const pid = getPropertyId(propertyOrId);
     if (!pid) return;
-    const ids = removeComparePropertyId(pid);
+    const removedProp = properties.find((p) => getPropertyId(p) === pid);
+    const ids = await removeComparePropertyId(pid);
     setSelectedIds(ids);
-    setSearchParams(ids.length ? { ids: ids.join(',') } : {});
-    window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
+    setSearchParams(ids.length ? { ids: ids.join(',') } : {}, { replace: true });
+    showSuccess(`Removed "${removedProp?.title || 'Property'}" from comparison.`);
   };
 
-  const handleAddPropertySelect = (e) => {
+  const handleAddPropertySelect = async (e) => {
     const pid = e.target.value;
     if (!pid) return;
     const current = getComparePropertyIds();
@@ -188,22 +203,26 @@ export default function ComparePropertiesPage() {
       e.target.value = '';
       return;
     }
-    const newIds = saveComparePropertyIds([...current, String(pid)]);
+    const newIds = await addComparePropertyId(String(pid));
     setSelectedIds(newIds);
+    setSearchParams(newIds.length ? { ids: newIds.join(',') } : {}, { replace: true });
     e.target.value = '';
     showSuccess('Property added to comparison table!');
-    window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
   };
 
-  const handlePrefillTopProperties = () => {
+  const handlePrefillTopProperties = async () => {
     if (marketProperties.length > 0) {
       const topIds = marketProperties.slice(0, 3).map((p) => getPropertyId(p)).filter(Boolean);
-      const ids = saveComparePropertyIds(topIds);
-      setSelectedIds(ids);
+      for (const id of topIds) {
+        await addComparePropertyId(id);
+      }
+      const newIds = getComparePropertyIds();
+      setSelectedIds(newIds);
+      setSearchParams(newIds.length ? { ids: newIds.join(',') } : {}, { replace: true });
       showSuccess('Pre-filled top market properties for comparison.');
-      window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
     }
   };
+
 
   const recommended = useMemo(() => {
     const scoredProperties = properties.filter((property) => Number.isFinite(Number(property.investment_score)));
@@ -331,10 +350,14 @@ export default function ComparePropertiesPage() {
 
   const projectAmenities = useMemo(() => {
     const names = new Set();
-    properties.forEach((property) => (property.amenities || []).forEach((amenity) => {
-      const name = amenityName(amenity);
-      if (name && nearbyCategory(name) === 'Other nearby places') names.add(name);
-    }));
+    properties.forEach((property) => {
+      const normalizedList = normalizeAmenities(property.amenities || []);
+      normalizedList.forEach((name) => {
+        if (nearbyCategory(name) === 'Other nearby places') {
+          names.add(name);
+        }
+      });
+    });
     return [...names].sort((a, b) => a.localeCompare(b));
   }, [properties]);
 
@@ -351,11 +374,11 @@ export default function ComparePropertiesPage() {
     return nearbyPlacesFor(property).some((place) => nearbyCategory(place) === targetCategory);
   };
 
-  const handleClearAll = () => {
-    clearCompareSelection();
+  const handleClearAll = async () => {
+    await clearCompareSelection();
     setSelectedIds([]);
     setProperties([]);
-    setSearchParams({});
+    setSearchParams({}, { replace: true });
     showSuccess('Cleared comparison list.');
   };
 
@@ -423,12 +446,12 @@ export default function ComparePropertiesPage() {
         <>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {properties.map((property) => {
-              const image = property.images?.find((item) => item.is_cover)?.url || property.images?.[0]?.url;
+              const image = getPropertyCoverImage(property) || DEFAULT_PROPERTY_PLACEHOLDER;
               const isRecommended = recommended?.id === property.id;
               return (
                 <article key={property.id} className={`overflow-hidden rounded-xl border bg-surface-container-lowest shadow-ambient ${isRecommended ? 'border-tertiary ring-1 ring-tertiary/30' : 'border-outline-variant/50'}`}>
                   <div className="relative h-28 bg-surface-container-high">
-                    {image && <img src={getPropertyMediaUrl(image)} alt={property.title} className="h-full w-full object-cover" />}
+                    <img src={image} alt={property.title} className="h-full w-full object-cover" />
                     <button onClick={() => removeProperty(property.id)} className="print-hide absolute right-2 top-2 rounded-full bg-white/90 p-1.5 text-secondary hover:text-error" aria-label={`Remove ${property.title}`}><X className="h-4 w-4" /></button>
                     {isRecommended && <span className="absolute left-2 top-2 rounded-full bg-tertiary px-2 py-1 text-[10px] font-bold text-white">AI PICK</span>}
                   </div>
@@ -451,7 +474,7 @@ export default function ComparePropertiesPage() {
               <div className="comparison-table-content min-w-[760px]">
                 <div className="grid bg-inverse-surface px-4 py-3 text-[11px] font-mono uppercase tracking-wide text-inverse-on-surface" style={{ gridTemplateColumns: `180px repeat(${properties.length}, minmax(0, 1fr))` }}><div>Feature / nearby place</div>{properties.map((property) => <div key={property.id} className="truncate px-2">{property.title}</div>)}</div>
                 {projectAmenities.map((name, index) => (
-                  <div key={`amenity-${name}`} className={`grid items-center px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-surface-container-low/50' : ''}`} style={{ gridTemplateColumns: `180px repeat(${properties.length}, minmax(0, 1fr))` }}><div className="font-semibold text-on-surface-variant">{name}</div>{properties.map((property) => { const hasAmenity = (property.amenities || []).some((amenity) => amenityName(amenity) === name); return <div key={property.id} className="px-2">{hasAmenity ? <Check className="h-5 w-5 text-tertiary" /> : <X className="h-5 w-5 text-error" />}</div>; })}</div>
+                  <div key={`amenity-${name}`} className={`grid items-center px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-surface-container-low/50' : ''}`} style={{ gridTemplateColumns: `180px repeat(${properties.length}, minmax(0, 1fr))` }}><div className="font-semibold text-on-surface-variant">{name}</div>{properties.map((property) => { const normList = normalizeAmenities(property.amenities || []); const hasAmenity = normList.includes(name); return <div key={property.id} className="px-2">{hasAmenity ? <Check className="h-5 w-5 text-tertiary" /> : <X className="h-5 w-5 text-error" />}</div>; })}</div>
                 ))}
                 {/* <div className="border-y border-outline-variant/40 bg-primary/5 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-primary">Nearby places</div> */}
                 {nearbyCategories.map((category, index) => (

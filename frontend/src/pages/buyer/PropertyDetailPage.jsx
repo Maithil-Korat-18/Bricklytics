@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ROUTES } from '../../constants/routes';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { getPropertyId, isComparePropertySelected, toggleComparePropertyId } from '../../utils/compareSelection';
+import { normalizeAmenities } from '../../utils/amenityNormalizer';
 import LocationAnalysisSection from '../../components/buyer/location/LocationAnalysisSection';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
@@ -290,7 +291,7 @@ async function generateBrochurePDF(property) {
     doc.text('  AMENITIES & FEATURES', 15, y + 5.5);
     y += 14;
 
-    const amenityNames = property.amenities.map((a) => (typeof a === 'string' ? a : a.name));
+    const amenityNames = normalizeAmenities(property.amenities);
     const cols4 = 4;
     const aCols = Math.ceil(amenityNames.length / cols4);
     amenityNames.forEach((name, i) => {
@@ -417,14 +418,14 @@ export default function PropertyDetailPage() {
     }
   };
 
-  const handleCompare = () => {
+  const handleCompare = async () => {
     const pid = getPropertyId(property);
     if (!pid) {
       showError('Invalid property ID.');
       return;
     }
 
-    const result = toggleComparePropertyId(pid);
+    const result = await toggleComparePropertyId(pid);
     if (result.limitReached) {
       showError('You can add a maximum of 12 properties to your compare list.');
     } else if (!result.invalid) {
@@ -434,7 +435,6 @@ export default function PropertyDetailPage() {
       } else {
         showSuccess(`Removed "${property.title || 'Property'}" from compare list.`);
       }
-      window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
     }
   };
 
@@ -710,10 +710,10 @@ export default function PropertyDetailPage() {
             <h2 className="text-base font-bold text-slate-900">Amenities & Features</h2>
             {property.amenities && property.amenities.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {property.amenities.map((am, idx) => (
+                {normalizeAmenities(property.amenities).map((am, idx) => (
                   <div key={idx} className="flex items-center space-x-2 text-xs font-semibold text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
                     <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    <span>{am.name || am}</span>
+                    <span>{am}</span>
                   </div>
                 ))}
               </div>

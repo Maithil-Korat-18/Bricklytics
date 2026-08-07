@@ -49,7 +49,9 @@ class PropertyModuleTest(TestCase):
         }
 
     def tearDown(self):
-        Property.objects.all().delete()
+        if hasattr(self, 'seller') and self.seller.id:
+            Property.objects.filter(seller_id=str(self.seller.id)).delete()
+        Property.objects.filter(title__icontains="Villa").delete()
         User.objects.filter(email="test_seller_module@example.com").delete()
 
     def test_create_property_success(self):
@@ -134,3 +136,34 @@ class PropertyModuleTest(TestCase):
         data = response.json()
         self.assertEqual(len(data['data']['images']), 1)
         self.assertTrue(data['data']['images'][0]['is_cover'])
+
+    def test_facing_direction_does_not_affect_resale_price_prediction(self):
+        from seller.services.prediction_service import PredictionService
+        service = PredictionService()
+        
+        base_conditions = {
+            'carpetArea': 1200,
+            'bhk': 3,
+            'propertyType': 'Flat / Apartment',
+            'latitude': 23.0225,
+            'longitude': 72.5714,
+            'listingType': 'Resale Property',
+            'propertyAge': 5,
+            'reconstructionNeeded': 'minor renovation',
+        }
+
+        res_east = service.predict_by_conditions({**base_conditions, 'facing': 'East'})
+        res_south = service.predict_by_conditions({**base_conditions, 'facing': 'South'})
+        res_north = service.predict_by_conditions({**base_conditions, 'facing': 'North-East'})
+
+        # Final suggested price and predicted price must be identical regardless of facing
+        self.assertEqual(res_east['final_suggested_price'], res_south['final_suggested_price'])
+        self.assertEqual(res_east['final_suggested_price'], res_north['final_suggested_price'])
+
+        # Adjustment breakdown must not contain facing keys
+        breakdown = res_east['adjustment_breakdown']
+        self.assertNotIn('facing_adjustment', breakdown)
+        self.assertNotIn('facing_percent', breakdown)
+        self.assertIn('property_age_adjustment', breakdown)
+        self.assertIn('renovation_adjustment', breakdown)
+

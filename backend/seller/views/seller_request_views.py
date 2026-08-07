@@ -34,6 +34,19 @@ class SellerRequestsListView(BaseAPIView):
             }
         ).order_by('-created_at')
 
+        # Map seller properties to cover images & locality
+        prop_info_map = {}
+        for p in seller_props:
+            cover_img = None
+            if p.images:
+                cover_img = next((img.url for img in p.images if getattr(img, 'is_cover', False)), None)
+                if not cover_img and len(p.images) > 0:
+                    cover_img = p.images[0].url
+            prop_info_map[str(p.id)] = {
+                'image': cover_img,
+                'locality': p.locality or p.address or 'Ahmedabad',
+            }
+
         results = []
         for d in requests_docs:
             item = d.to_dict()
@@ -51,6 +64,13 @@ class SellerRequestsListView(BaseAPIView):
                     parts = email.split('@')
                     item['buyer_email'] = parts[0][:2] + '***@' + parts[1] if len(parts) == 2 else '***@***.com'
             
+            # Attach cover image & locality for UI preview
+            p_info = prop_info_map.get(str(d.property_id), {})
+            if p_info.get('image'):
+                item['property_image'] = p_info['image']
+            if p_info.get('locality'):
+                item['property_locality'] = p_info['locality']
+
             results.append(item)
 
         return self.success_response(data=results, message="Seller requests fetched successfully.")

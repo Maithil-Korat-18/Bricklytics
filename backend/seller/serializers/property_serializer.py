@@ -11,6 +11,17 @@ class PropertyAmenitySerializer(BaseSerializer):
     category = serializers.CharField(max_length=50, default='General', required=False)
     icon = serializers.CharField(max_length=100, required=False, allow_null=True)
 
+    def to_representation(self, instance):
+        if isinstance(instance, str):
+            return {'name': instance, 'category': 'General', 'icon': None}
+        if isinstance(instance, dict):
+            return {
+                'name': str(instance.get('name', '')),
+                'category': str(instance.get('category', 'General')),
+                'icon': instance.get('icon'),
+            }
+        return super().to_representation(instance)
+
 
 class PropertyImageSerializer(BaseSerializer):
     id = serializers.CharField(read_only=True)
@@ -19,6 +30,19 @@ class PropertyImageSerializer(BaseSerializer):
     caption = serializers.CharField(required=False, allow_null=True)
     created_at = serializers.CharField(read_only=True)
 
+    def to_representation(self, instance):
+        if isinstance(instance, str):
+            return {'id': '', 'url': instance, 'is_cover': False, 'caption': None, 'created_at': None}
+        if isinstance(instance, dict):
+            return {
+                'id': str(instance.get('id', '')),
+                'url': str(instance.get('url', '')),
+                'is_cover': bool(instance.get('is_cover', False)),
+                'caption': instance.get('caption'),
+                'created_at': str(instance.get('created_at', '')) if instance.get('created_at') else None,
+            }
+        return super().to_representation(instance)
+
 
 class PropertyDocumentSerializer(BaseSerializer):
     id = serializers.CharField(read_only=True)
@@ -26,6 +50,19 @@ class PropertyDocumentSerializer(BaseSerializer):
     url = serializers.CharField(read_only=True)
     file_type = serializers.CharField(read_only=True)
     created_at = serializers.CharField(read_only=True)
+
+    def to_representation(self, instance):
+        if isinstance(instance, str):
+            return {'id': '', 'title': instance, 'url': instance, 'file_type': 'pdf', 'created_at': None}
+        if isinstance(instance, dict):
+            return {
+                'id': str(instance.get('id', '')),
+                'title': str(instance.get('title', '')),
+                'url': str(instance.get('url', '')),
+                'file_type': str(instance.get('file_type', 'pdf')),
+                'created_at': str(instance.get('created_at', '')) if instance.get('created_at') else None,
+            }
+        return super().to_representation(instance)
 
 
 class PropertyCreateUpdateSerializer(BaseSerializer):

@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { Maximize2, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getPropertyMediaUrl } from '../../utils/propertyMedia';
+import { getPropertyImages, DEFAULT_PROPERTY_PLACEHOLDER } from '../../utils/propertyMedia';
 
 export default function ImageGallery({ images = [] }) {
-  const fallbackImages = [
-    { id: '1', url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80' },
-    { id: '2', url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80' },
-    { id: '3', url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80' },
-  ];
+  const normalizedImages = getPropertyImages({ images });
+  const galleryImages = normalizedImages.length > 0
+    ? normalizedImages
+    : [{ id: 'placeholder-1', url: DEFAULT_PROPERTY_PLACEHOLDER, is_cover: true }];
 
-  const galleryImages = images.length > 0 ? images : fallbackImages;
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -28,7 +26,7 @@ export default function ImageGallery({ images = [] }) {
       {/* Main Image Banner */}
       <div className="relative h-80 sm:h-96 w-full rounded-2xl overflow-hidden bg-slate-900 group shadow-card-soft">
         <img
-          src={getPropertyMediaUrl(activeImage.url)}
+          src={activeImage.url}
           alt="Property View"
           className="w-full h-full object-cover transition-all duration-300"
         />
@@ -72,7 +70,7 @@ export default function ImageGallery({ images = [] }) {
                 selectedIndex === idx ? 'border-blue-600 ring-2 ring-blue-500/20' : 'border-transparent opacity-70 hover:opacity-100'
               }`}
             >
-              <img src={getPropertyMediaUrl(img.url)} alt="" className="w-full h-full object-cover" />
+              <img src={img.url} alt="" className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -89,7 +87,7 @@ export default function ImageGallery({ images = [] }) {
           </button>
 
           <div className="relative max-w-5xl max-h-[85vh] w-full flex items-center justify-center">
-            <img src={getPropertyMediaUrl(activeImage.url)} alt="" className="max-h-[80vh] max-w-full rounded-2xl object-contain shadow-2xl" />
+            <img src={activeImage.url} alt="" className="max-h-[80vh] max-w-full rounded-2xl object-contain shadow-2xl" />
 
             {galleryImages.length > 1 && (
               <>

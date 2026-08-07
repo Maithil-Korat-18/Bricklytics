@@ -66,6 +66,32 @@ export const buyerApi = {
     return response.data;
   },
 
+  getCompareList: async () => {
+    const response = await apiClient.get('/buyer/compare/');
+    return response.data;
+  },
+
+  addToCompare: async (propertyId) => {
+    const response = await apiClient.post('/buyer/compare/', { property_id: propertyId });
+    return response.data;
+  },
+
+  removeFromCompare: async (propertyId) => {
+    const response = await apiClient.delete('/buyer/compare/', { params: { property_id: propertyId } });
+    return response.data;
+  },
+
+  clearCompareList: async () => {
+    const response = await apiClient.delete('/buyer/compare/');
+    return response.data;
+  },
+
+  syncCompareList: async (propertyIds) => {
+    const response = await apiClient.post('/buyer/compare/', { property_ids: propertyIds });
+    return response.data;
+  },
+
+
   getRecentlyViewed: async () => {
     const response = await apiClient.get('/buyer/recently-viewed/');
     return response.data;

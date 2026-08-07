@@ -46,7 +46,6 @@ def _load_resale_rules() -> dict:
             _resale_rules = {
                 'property_age': {'0_to_2': 0.0, '3_to_5': -3.0, '6_to_10': -7.0, '11_to_15': -12.0, 'above_15': -18.0},
                 'renovation_status': {'newly renovated': 6.0, 'major renovation': 3.0, 'minor renovation': 0.0, 'never renovated': -3.0, 'requires reconstruction': -8.0},
-                'facing_direction': {'east': 2.0, 'north': 2.0, 'north-east': 2.0, 'west': 0.0, 'south': -2.0}
             }
     return _resale_rules
 
@@ -80,7 +79,7 @@ def _load_model():
 class PredictionService(BaseService):
     """Deterministic price, appreciation, and investment score prediction contract."""
 
-    PREDICTION_FIELDS = ('area_sqft', 'carpetArea', 'bhk', 'property_type', 'latitude', 'longitude', 'listingType', 'reconstructionNeeded', 'propertyAge', 'facing')
+    PREDICTION_FIELDS = ('area_sqft', 'carpetArea', 'bhk', 'property_type', 'latitude', 'longitude', 'listingType', 'reconstructionNeeded', 'propertyAge')
 
     @staticmethod
     def prediction_fingerprint(data: dict) -> str:
@@ -270,11 +269,9 @@ class PredictionService(BaseService):
             # NEW PROPERTY FLOW: Final Price = Base Market Price
             age_pct = 0.0
             reno_pct = 0.0
-            facing_pct = 0.0
             total_adj_pct = 0.0
             age_adj = 0.0
             reno_adj = 0.0
-            facing_adj = 0.0
             total_adj = 0.0
             final_price = base_price
             display_listing_type = 'New Property'
@@ -283,7 +280,6 @@ class PredictionService(BaseService):
             # RESALE PROPERTY FLOW: Apply Resale Adjustment Engine rules from resale_rules.json
             display_listing_type = 'Resale Property'
             property_age = int(conditions.get('propertyAge') or conditions.get('property_age') or 1)
-            facing = str(conditions.get('facing') or 'East').strip().lower()
             reconstruction_needed = str(conditions.get('reconstructionNeeded') or conditions.get('reconstruction_needed') or '').strip().lower()
 
             # Age adjustment
@@ -303,14 +299,9 @@ class PredictionService(BaseService):
             reno_rules = resale_rules.get('renovation_status', {})
             reno_pct = float(reno_rules.get(reconstruction_needed, 0.0))
 
-            # Facing direction adjustment
-            facing_rules = resale_rules.get('facing_direction', {})
-            facing_pct = float(facing_rules.get(facing, 0.0))
-
-            total_adj_pct = round(age_pct + reno_pct + facing_pct, 2)
+            total_adj_pct = round(age_pct + reno_pct, 2)
             age_adj = round(base_price * (age_pct / 100.0), 2)
             reno_adj = round(base_price * (reno_pct / 100.0), 2)
-            facing_adj = round(base_price * (facing_pct / 100.0), 2)
             total_adj = round(base_price * (total_adj_pct / 100.0), 2)
             final_price = round(max(50000.0, base_price + total_adj), 2)
 
@@ -319,8 +310,6 @@ class PredictionService(BaseService):
                 'property_age_percent': age_pct,
                 'renovation_adjustment': reno_adj,
                 'renovation_percent': reno_pct,
-                'facing_adjustment': facing_adj,
-                'facing_percent': facing_pct,
                 'total_adjustment': total_adj,
                 'total_adjustment_percent': total_adj_pct,
             }

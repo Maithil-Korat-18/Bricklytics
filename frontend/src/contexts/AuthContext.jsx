@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authApi } from '../services/authApi';
-import { clearCompareSelection } from '../utils/compareSelection';
+import { clearLocalCompareSelectionOnly, syncCompareWithBackend } from '../utils/compareSelection';
 
 const AuthContext = createContext(null);
 
@@ -22,16 +22,19 @@ export function AuthProvider({ children }) {
       const res = await authApi.getMe();
       if (res.success && res.data) {
         setUser(res.data);
+        await syncCompareWithBackend();
       } else {
         localStorage.removeItem('auth_token');
         setToken(null);
         setUser(null);
+        clearLocalCompareSelectionOnly();
       }
     } catch (err) {
       console.warn('Session expired or invalid token:', err);
       localStorage.removeItem('auth_token');
       setToken(null);
       setUser(null);
+      clearLocalCompareSelectionOnly();
     } finally {
       setLoading(false);
     }
@@ -45,9 +48,10 @@ export function AuthProvider({ children }) {
     const res = await authApi.login({ email, password });
     if (res.success && res.data?.token) {
       localStorage.setItem('auth_token', res.data.token);
-      clearCompareSelection();
+      clearLocalCompareSelectionOnly();
       setToken(res.data.token);
       setUser(res.data.user);
+      await syncCompareWithBackend();
       return res.data;
     }
     throw new Error(res.message || 'Login failed.');
@@ -55,7 +59,7 @@ export function AuthProvider({ children }) {
 
   const signup = async (userData) => {
     const res = await authApi.signup(userData);
-    clearCompareSelection();
+    clearLocalCompareSelectionOnly();
     return res;
   };
 
@@ -63,9 +67,10 @@ export function AuthProvider({ children }) {
     const res = await authApi.verifyEmail({ email, code });
     if (res.success && res.data?.token) {
       localStorage.setItem('auth_token', res.data.token);
-      clearCompareSelection();
+      clearLocalCompareSelectionOnly();
       setToken(res.data.token);
       setUser(res.data.user);
+      await syncCompareWithBackend();
     }
     return res;
   };
@@ -75,7 +80,7 @@ export function AuthProvider({ children }) {
       await authApi.logout();
     } catch {}
     localStorage.removeItem('auth_token');
-    clearCompareSelection();
+    clearLocalCompareSelectionOnly();
     setToken(null);
     setUser(null);
   };

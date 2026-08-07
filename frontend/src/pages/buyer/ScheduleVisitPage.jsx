@@ -9,7 +9,7 @@ import { useToast } from '../../components/common/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROUTES, getPropertyDetailsPath } from '../../constants/routes';
 import { getComparePropertyIds } from '../../utils/compareSelection';
-import { getPropertyMediaUrl } from '../../utils/propertyMedia';
+import { getPropertyMediaUrl, getPropertyCoverImage } from '../../utils/propertyMedia';
 
 export default function ScheduleVisitPage() {
   const location = useLocation();
@@ -99,9 +99,9 @@ export default function ScheduleVisitPage() {
               console.warn('Could not fetch target property:', err);
             }
           }
-        } else if (allListings.length > 0) {
-          setSelectedPropertyId(String(allListings[0].id));
-          setSelectedProperty(allListings[0]);
+        } else {
+          setSelectedPropertyId('');
+          setSelectedProperty(null);
         }
       } catch (err) {
         console.error('Error loading schedule visit data:', err);
@@ -111,7 +111,10 @@ export default function ScheduleVisitPage() {
   }, [targetPropertyId]);
 
   useEffect(() => {
-    if (!selectedPropertyId) return;
+    if (!selectedPropertyId) {
+      setSelectedProperty(null);
+      return;
+    }
     const allCombined = [...marketProperties, ...comparePropertiesList, ...wishlistProperties];
     const found = allCombined.find((p) => String(p.id) === String(selectedPropertyId));
     if (found) setSelectedProperty(found);
@@ -120,10 +123,15 @@ export default function ScheduleVisitPage() {
   const handlePropertyChange = (e) => {
     const pid = e.target.value;
     setSelectedPropertyId(pid);
+    if (!pid) {
+      setSelectedProperty(null);
+      return;
+    }
     const allCombined = [...marketProperties, ...comparePropertiesList, ...wishlistProperties];
     const found = allCombined.find((p) => String(p.id) === String(pid));
     setSelectedProperty(found || null);
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -246,9 +254,9 @@ export default function ScheduleVisitPage() {
             {/* Selected Property Preview Banner */}
             {selectedProperty && (
               <div className="flex items-center gap-4 p-3.5 bg-blue-50/60 rounded-xl border border-blue-100">
-                {selectedProperty.images?.[0]?.url ? (
+                {getPropertyCoverImage(selectedProperty) ? (
                   <img
-                    src={getPropertyMediaUrl(selectedProperty.images[0].url)}
+                    src={getPropertyCoverImage(selectedProperty)}
                     alt={selectedProperty.title}
                     className="w-14 h-14 rounded-lg object-cover ring-1 ring-slate-200 shrink-0"
                   />
@@ -361,7 +369,7 @@ export default function ScheduleVisitPage() {
                 const propMatch = [...marketProperties, ...comparePropertiesList, ...wishlistProperties].find(
                   (p) => String(p.id) === String(v.property_id)
                 );
-                const coverImg = propMatch?.images?.find((img) => img.is_cover)?.url || propMatch?.images?.[0]?.url || v.property_image;
+                const coverImg = propMatch ? getPropertyCoverImage(propMatch) : (v.property_image ? getPropertyMediaUrl(v.property_image) : null);
 
                 return (
                   <div
@@ -373,7 +381,7 @@ export default function ScheduleVisitPage() {
                     <div className="flex items-center gap-3">
                       {coverImg ? (
                         <img
-                          src={getPropertyMediaUrl(coverImg)}
+                          src={coverImg}
                           alt={v.property_title || 'Property'}
                           className="w-12 h-12 rounded-xl object-cover ring-1 ring-slate-200 shrink-0"
                         />

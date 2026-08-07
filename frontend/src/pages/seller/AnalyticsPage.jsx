@@ -563,9 +563,17 @@ export default function AnalyticsPage() {
                       >
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                            <div className="p-3 rounded-2xl bg-[#d8e2ff] text-[#0058be] shrink-0 mt-0.5">
-                              <Calendar className="w-5 h-5" />
-                            </div>
+                            {req.property_image ? (
+                              <img
+                                src={getPropertyMediaUrl(req.property_image)}
+                                alt={req.property_title || 'Property'}
+                                className="w-12 h-12 rounded-2xl object-cover ring-1 ring-slate-200 shrink-0 mt-0.5"
+                              />
+                            ) : (
+                              <div className="p-3 rounded-2xl bg-[#d8e2ff] text-[#0058be] shrink-0 mt-0.5">
+                                <Calendar className="w-5 h-5" />
+                              </div>
+                            )}
 
                             <div className="min-w-0 flex-1 space-y-1">
                               <div className="flex items-center space-x-2">

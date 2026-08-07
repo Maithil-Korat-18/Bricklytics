@@ -4,7 +4,7 @@ import { LayoutGrid, List, SlidersHorizontal, ArrowLeft, ArrowRight, Building2, 
 import PropertyCard from '../../components/buyer/PropertyCard';
 import ExploreFilters from '../../components/buyer/ExploreFilters';
 import { buyerApi } from '../../services/buyerApi';
-import { getComparePropertyIds, saveComparePropertyIds } from '../../utils/compareSelection';
+import { clearCompareSelection, getComparePropertyIds } from '../../utils/compareSelection';
 import { ROUTES } from '../../constants/routes';
 
 export default function PropertyListingPage() {
@@ -45,16 +45,40 @@ export default function PropertyListingPage() {
 
   // Sync URL search params when filter params change
   useEffect(() => {
-    const urlLocality = searchParams.get('locality');
-    const urlSearch = searchParams.get('search');
-    
-    if (urlLocality !== null && urlLocality !== filterParams.locality) {
-      setFilterParams((prev) => ({ ...prev, locality: urlLocality }));
-      setPagination((prev) => ({ ...prev, page: 1 }));
-    } else if (urlSearch !== null && urlSearch !== filterParams.search) {
-      setFilterParams((prev) => ({ ...prev, search: urlSearch }));
-      setPagination((prev) => ({ ...prev, page: 1 }));
-    }
+    const urlSearch = searchParams.get('search') || '';
+    const urlPropType = searchParams.get('property_type') || '';
+    const urlBhk = searchParams.get('bhk') || '';
+    const urlMinPrice = searchParams.get('min_price') || '';
+    const urlMaxPrice = searchParams.get('max_price') || '';
+    const urlLocality = searchParams.get('locality') || '';
+    const urlMinScore = searchParams.get('min_investment_score') || '';
+    const urlSort = searchParams.get('sort_by') || '-created_at';
+
+    setFilterParams((prev) => {
+      if (
+        prev.search === urlSearch &&
+        prev.property_type === urlPropType &&
+        prev.bhk === urlBhk &&
+        prev.min_price === urlMinPrice &&
+        prev.max_price === urlMaxPrice &&
+        prev.locality === urlLocality &&
+        prev.min_investment_score === urlMinScore &&
+        prev.sort_by === urlSort
+      ) {
+        return prev;
+      }
+      setPagination((p) => ({ ...p, page: 1 }));
+      return {
+        search: urlSearch,
+        property_type: urlPropType,
+        bhk: urlBhk,
+        min_price: urlMinPrice,
+        max_price: urlMaxPrice,
+        locality: urlLocality,
+        min_investment_score: urlMinScore,
+        sort_by: urlSort,
+      };
+    });
   }, [searchParams]);
 
   const fetchProperties = useCallback(async () => {
@@ -67,14 +91,19 @@ export default function PropertyListingPage() {
       };
 
       const res = await buyerApi.getProperties(params);
-      if (res.success && res.data) {
-        setProperties(res.data.results || []);
-        setPagination((prev) => ({
-          ...prev,
-          totalCount: res.data.count || 0,
-          totalPages: res.data.total_pages || Math.ceil((res.data.count || 0) / prev.pageSize) || 1,
-        }));
-      }
+      const payload = res?.data || res;
+      const results = Array.isArray(payload?.results)
+        ? payload.results
+        : (Array.isArray(payload) ? payload : (Array.isArray(res) ? res : []));
+      const count = payload?.count ?? results.length;
+      const totalPages = payload?.total_pages || Math.ceil(count / pagination.pageSize) || 1;
+
+      setProperties(results);
+      setPagination((prev) => ({
+        ...prev,
+        totalCount: count,
+        totalPages: totalPages,
+      }));
     } catch (err) {
       console.error('Error fetching properties:', err);
     } finally {
@@ -319,7 +348,7 @@ export default function PropertyListingPage() {
         )}
 
         {/* Floating Compare Bar */}
-        {/* {compareCount > 0 && (
+        {compareCount > 0 && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-slate-700 animate-fadeIn">
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-blue-600 font-extrabold text-xs flex items-center justify-center text-white">
@@ -336,18 +365,17 @@ export default function PropertyListingPage() {
               Compare Now
             </button>
             <button
-              onClick={() => {
-                saveComparePropertyIds([]);
+              onClick={async () => {
+                await clearCompareSelection();
                 setCompareCount(0);
-                window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
               }}
-              className="p-1.5 text-slate-400 hover:text-white transition"
+              className="p-1.5 text-slate-400 hover:text-white transition cursor-pointer"
               title="Clear comparison list"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
-        )} */}
+        )}
       </main>
     </div>
   );

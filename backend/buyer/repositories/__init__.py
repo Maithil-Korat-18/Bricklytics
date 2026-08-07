@@ -3,6 +3,7 @@ from buyer.repositories.buyer_repository import (
     SavedSearchRepository,
     VisitScheduleRepository,
     PropertyViewRepository,
+    PropertyCompareRepository,
 )
 
 __all__ = [
@@ -10,4 +11,6 @@ __all__ = [
     'SavedSearchRepository',
     'VisitScheduleRepository',
     'PropertyViewRepository',
+    'PropertyCompareRepository',
 ]
+

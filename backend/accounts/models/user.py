@@ -48,6 +48,10 @@ class User(BaseDocument):
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}".strip()
 
+    @property
+    def is_authenticated(self) -> bool:
+        return True
+
     def set_password(self, raw_password: str) -> None:
         self.password_hash = make_password(raw_password)
 

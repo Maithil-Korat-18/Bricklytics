@@ -4,7 +4,7 @@ import { Check, Heart, MapPin, Bed, Bath, Maximize2, TrendingUp, Sparkles, Slide
 import { useToast } from '../../components/common/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { getPropertyDetailsPath } from '../../constants/routes';
-import { getPropertyMediaUrl } from '../../utils/propertyMedia';
+import { getPropertyCoverImage, DEFAULT_PROPERTY_PLACEHOLDER } from '../../utils/propertyMedia';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { getPropertyId, isComparePropertySelected, toggleComparePropertyId } from '../../utils/compareSelection';
 
@@ -19,6 +19,7 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
   const propId = getPropertyId(property);
 
   React.useEffect(() => {
+    setIsCompared(isComparePropertySelected(property));
     const handleUpdate = () => {
       setIsCompared(isComparePropertySelected(property));
     };
@@ -28,9 +29,7 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
 
   const isFavorite = wishlistLoading ? isFavoriteInitial : favoriteIds.has(String(propId));
 
-  const coverImage = property.images?.find((img) => img.is_cover)?.url ||
-    property.images?.[0]?.url ||
-    'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80';
+  const coverImage = getPropertyCoverImage(property) || DEFAULT_PROPERTY_PLACEHOLDER;
 
   const formatCurrency = (val) => {
     if (!val) return '₹0';
@@ -59,7 +58,7 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
     }
   };
 
-  const handleCompareClick = (e) => {
+  const handleCompareClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!propId) {
@@ -67,7 +66,7 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
       return;
     }
 
-    const result = toggleComparePropertyId(propId);
+    const result = await toggleComparePropertyId(propId);
     if (result.limitReached) {
       showError('You can add a maximum of 12 properties to your compare list.');
     } else if (!result.invalid) {
@@ -78,9 +77,9 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
         if (showInfo) showInfo(`Removed "${property.title || 'Property'}" from compare list.`);
         else showSuccess(`Removed "${property.title || 'Property'}" from compare list.`);
       }
-      window.dispatchEvent(new CustomEvent('bricklytics_compare_updated'));
     }
   };
+
 
   const score = property.investment_score || 92;
   const appreciation = property.appreciation_rate || '+14.5% Exp. Appr.';
@@ -97,7 +96,7 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
       <div className="relative h-56 w-full overflow-hidden bg-slate-100">
         <div 
           className="bg-cover bg-center w-full h-full group-hover:scale-105 transition-transform duration-500" 
-          style={{ backgroundImage: `url("${getPropertyMediaUrl(coverImage)}")` }}
+          style={{ backgroundImage: `url("${coverImage}")` }}
         />
 
         {/* Exp Appreciation Badge (Top Left) */}

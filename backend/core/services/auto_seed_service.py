@@ -35,9 +35,9 @@ def ensure_database_seeded(force: bool = False) -> None:
             if active_count < 10 or force:
                 logger.info("Initializing/Seeding database (active count: %d)...", active_count)
                 
-                # 1. Import 500 dataset properties
+                # 1. Import 2000 dataset properties
                 from django.core.management import call_command
-                call_command('import_csv_properties', limit=500, clear=True)
+                call_command('import_csv_properties', limit=2000, clear=True)
 
                 # 2. Seed seller 1 and seller 2 accounts and rich properties
                 try:

@@ -12,6 +12,8 @@ import {
   SlidersHorizontal, Award, Target,
 } from 'lucide-react';
 
+import { getPropertyCoverImage } from '../utils/propertyMedia';
+
 const formatCurrency = (val) => {
   if (!val) return '₹0';
   if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)} Cr`;
@@ -19,16 +21,17 @@ const formatCurrency = (val) => {
   return `₹${val.toLocaleString('en-IN')}`;
 };
 
-function TopPropertyRow({ property, rank, favoriteIds }) {
-  const rankBadge = rank === 1
-    ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-white shadow-md'
-    : rank === 2
-    ? 'bg-gradient-to-r from-slate-300 to-slate-400 text-white shadow'
-    : 'bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow';
+function RankedPropertyRow({ property, rank }) {
+  const rankBadge =
+    rank === 1
+      ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 shadow-md ring-2 ring-amber-300'
+      : rank === 2
+      ? 'bg-gradient-to-r from-slate-300 to-slate-400 text-white shadow'
+      : 'bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow';
 
   const RankIcon = rank === 1 ? Trophy : rank <= 3 ? Award : Star;
 
-  const coverImage = property.images?.find((img) => img.is_cover)?.url || property.images?.[0]?.url;
+  const coverImage = getPropertyCoverImage(property);
   const score = property.investment_score ?? property.ai_fair_price;
   const appreciation = Number(property.appreciation_3yr || 0).toFixed(1);
 

@@ -335,12 +335,6 @@ export default function Step3PricingImages() {
                       {predictionData.adjustment_breakdown.renovation_adjustment >= 0 ? `+₹${predictionData.adjustment_breakdown.renovation_adjustment.toLocaleString('en-IN')}` : `-₹${Math.abs(predictionData.adjustment_breakdown.renovation_adjustment).toLocaleString('en-IN')}`}
                     </span>
                   </div>
-                  <div className="flex justify-between text-[#424754]">
-                    <span>Facing Direction ({predictionData.adjustment_breakdown.facing_percent}%):</span>
-                    <span className="font-bold text-[#006947]">
-                      {predictionData.adjustment_breakdown.facing_adjustment >= 0 ? `+₹${predictionData.adjustment_breakdown.facing_adjustment.toLocaleString('en-IN')}` : `-₹${Math.abs(predictionData.adjustment_breakdown.facing_adjustment).toLocaleString('en-IN')}`}
-                    </span>
-                  </div>
                   <div className="pt-2 border-t border-[#f2f3ff] flex justify-between font-bold text-[#131b2e]">
                     <span>Total Resale Adjustment:</span>
                     <span className={predictionData.adjustment_breakdown.total_adjustment >= 0 ? 'text-[#006947]' : 'text-[#ba1a1a]'}>

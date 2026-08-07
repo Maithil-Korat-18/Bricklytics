@@ -9,6 +9,7 @@ from buyer.repositories.buyer_repository import (
     SavedSearchRepository,
     VisitScheduleRepository,
     PropertyViewRepository,
+    PropertyCompareRepository,
 )
 from seller.repositories.property_repository import PropertyRepository
 from core.exceptions.base import ResourceNotFoundError, ValidationError
@@ -23,7 +24,9 @@ class BuyerService(BaseService):
         self.search_repo = SavedSearchRepository()
         self.visit_repo = VisitScheduleRepository()
         self.view_repo = PropertyViewRepository()
+        self.compare_repo = PropertyCompareRepository()
         self.property_repo = PropertyRepository()
+
 
     def toggle_wishlist(self, user_id: str, property_id: str) -> dict:
         self._log_operation('toggle_wishlist', user_id=user_id, property_id=property_id)
@@ -130,12 +133,40 @@ class BuyerService(BaseService):
         self._log_operation('get_scheduled_visits', user_id=user_id)
         from buyer.models.visit_schedule import VisitSchedule
         docs = VisitSchedule.objects(user_id=user_id, is_deleted=False).order_by('-created_at')
+        
+        # Bulk query properties to attach correct cover image to every visit schedule item
+        prop_ids = list({str(d.property_id) for d in docs if d.property_id})
+        prop_map = {}
+        if prop_ids:
+            try:
+                from seller.models.property import Property
+                props = Property.objects(id__in=prop_ids, is_deleted=False)
+                for p in props:
+                    cover_img = None
+                    if p.images:
+                        cover_img = next((img.url for img in p.images if getattr(img, 'is_cover', False)), None)
+                        if not cover_img and len(p.images) > 0:
+                            cover_img = p.images[0].url
+                    prop_map[str(p.id)] = {
+                        'image': cover_img,
+                        'locality': p.locality or p.address or 'Ahmedabad',
+                    }
+            except Exception as err:
+                logger.warning("Could not bulk fetch property images for scheduled visits: %s", err)
+
         results = []
         for d in docs:
             item = d.to_dict()
             # Privacy Gating check for buyer view
             is_unlocked = d.status == 'confirmed' or bool(d.seller_reply) or any(m.sender_role == 'seller' for m in d.messages)
             item['contact_unlocked'] = is_unlocked
+
+            p_info = prop_map.get(str(d.property_id), {})
+            if p_info.get('image'):
+                item['property_image'] = p_info['image']
+            if p_info.get('locality'):
+                item['property_locality'] = p_info['locality']
+
             results.append(item)
         return results
 
@@ -191,23 +222,33 @@ class BuyerService(BaseService):
 
     def compare_properties(self, property_ids: list[str]) -> list[dict]:
         self._log_operation('compare_properties', count=len(property_ids))
-        # Cap to max 12 properties for safety
-        property_ids = [str(pid).strip() for pid in property_ids[:12] if str(pid).strip()]
+        # Cap to max 12 properties for safety and remove empty strings
+        clean_ids = []
+        for pid in property_ids[:12]:
+            s = str(pid).strip()
+            if s and s not in clean_ids:
+                clean_ids.append(s)
+
+        if not clean_ids:
+            return []
+
+        from seller.models.property import Property
+        prop_map = {}
+        try:
+            docs = Property.objects.filter(id__in=clean_ids, is_deleted=False)
+            for d in docs:
+                prop_map[str(d.id)] = d.to_dict()
+        except Exception as e:
+            logger.warning("Bulk fetch in compare_properties failed: %s. Falling back to repo lookups.", e)
 
         results = []
-        for pid in property_ids:
-            pdict = None
-            try:
-                pdict = self.property_repo.find_by_id(pid)
-            except Exception:
-                pass
-
+        for pid in clean_ids:
+            pdict = prop_map.get(pid)
             if not pdict:
                 try:
-                    all_active, _ = self.property_repo.filter_properties(limit=200)
-                    pdict = next((p for p in all_active if str(p.get('id')) == pid or str(p.get('_id')) == pid), None)
+                    pdict = self.property_repo.find_by_id(pid)
                 except Exception:
-                    pass
+                    pdict = None
 
             if pdict:
                 try:
@@ -216,6 +257,45 @@ class BuyerService(BaseService):
                     results.append(pdict)
 
         return results
+
+    def get_user_compare_ids(self, user_id: str) -> list[str]:
+        self._log_operation('get_user_compare_ids', user_id=user_id)
+        return self.compare_repo.find_by_user(user_id)
+
+    def get_user_compare_properties(self, user_id: str) -> dict:
+        self._log_operation('get_user_compare_properties', user_id=user_id)
+        ids = self.compare_repo.find_by_user(user_id)
+        props = self.compare_properties(ids)
+        return {
+            'property_ids': ids,
+            'properties': props,
+        }
+
+    def add_to_compare(self, user_id: str, property_id: str) -> dict:
+        self._log_operation('add_to_compare', user_id=user_id, property_id=property_id)
+        success = self.compare_repo.add_to_compare(user_id, property_id)
+        if not success and len(self.compare_repo.find_by_user(user_id)) >= 12:
+            raise ValidationError('Maximum 12 properties can be added to compare list.')
+        return self.get_user_compare_properties(user_id)
+
+    def remove_from_compare(self, user_id: str, property_id: str) -> dict:
+        self._log_operation('remove_from_compare', user_id=user_id, property_id=property_id)
+        self.compare_repo.remove_from_compare(user_id, property_id)
+        return self.get_user_compare_properties(user_id)
+
+    def clear_compare(self, user_id: str) -> dict:
+        self._log_operation('clear_compare', user_id=user_id)
+        self.compare_repo.clear_compare(user_id)
+        return {
+            'property_ids': [],
+            'properties': [],
+        }
+
+    def sync_user_compare(self, user_id: str, property_ids: list[str]) -> dict:
+        self._log_operation('sync_user_compare', user_id=user_id, count=len(property_ids))
+        self.compare_repo.sync_compare(user_id, property_ids)
+        return self.get_user_compare_properties(user_id)
+
 
     def get_better_alternatives(self, property_id: str, limit: int = 3) -> list[dict]:
         """
@@ -365,7 +445,11 @@ class BuyerService(BaseService):
 
     def enrich_property(self, prop: dict) -> dict:
         from buyer.services.investment_service import InvestmentScoreService
-        return InvestmentScoreService().calculate(prop)
+        from common.amenity_normalizer import normalize_amenity_list
+        enriched = InvestmentScoreService().calculate(prop)
+        if 'amenities' in enriched and isinstance(enriched['amenities'], list):
+            enriched['amenities'] = normalize_amenity_list(enriched['amenities'])
+        return enriched
 
     def get_trending_locations(self) -> list[dict]:
         try:
@@ -458,7 +542,7 @@ class BuyerService(BaseService):
                 'recently_viewed_count': len(recently_viewed),
                 'total_market_properties': total_count,
                 'ai_recommendations_count': high_conviction_count,
-                'compared_count': 3,
+                'compared_count': len(self.compare_repo.find_by_user(user_id)),
             },
             'wishlist_items': wishlist_items[:4],
             'saved_searches': saved_searches,

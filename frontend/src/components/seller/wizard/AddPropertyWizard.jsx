@@ -229,7 +229,11 @@ export default function AddPropertyWizard() {
         const propId = res.data.id;
 
         if (data.rawImageFiles && data.rawImageFiles.length > 0) {
-          await propertyApi.uploadImages(propId, data.rawImageFiles);
+          const uploadRes = await propertyApi.uploadImages(propId, data.rawImageFiles);
+          const uploadedImages = uploadRes.data?.images || [];
+          if (data.coverIndex > 0 && uploadedImages[data.coverIndex]?.id) {
+            await propertyApi.setCoverImage(propId, uploadedImages[data.coverIndex].id);
+          }
         }
 
         if (data.rawBrochureFile) {
