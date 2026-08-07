@@ -53,5 +53,7 @@ class InvestmentScoreService:
         annual_pct = result.get('appreciation_annual_rate') or 5.2
         result['appreciation_rate'] = f"+{float(annual_pct):.1f}% Annual Locality Growth"
         result['investment_tag'] = result.get('investment_rating') or 'Very Good'
-        result['investment_description'] = result.get('investment_explanation') or 'AI Investment Score unavailable.'
+        exp = str(result.get('investment_explanation') or 'AI Investment Score unavailable.').replace('/95', '/100')
+        result['investment_explanation'] = exp
+        result['investment_description'] = exp
         return result

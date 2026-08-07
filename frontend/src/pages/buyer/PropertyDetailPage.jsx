@@ -77,7 +77,7 @@ function InvestmentRatingBadge({ rating }) {
 }
 
 function ScoreRing({ score }) {
-  const maxScore = 95;
+  const maxScore = 100;
   const val = Math.min(maxScore, Math.max(0, score || 0));
   const color = val >= 90 ? '#10b981' : val >= 80 ? '#3b82f6' : val >= 70 ? '#6366f1' : val >= 60 ? '#f59e0b' : '#ef4444';
   const r = 28;
@@ -98,7 +98,7 @@ function ScoreRing({ score }) {
       </svg>
       <div className="text-center relative z-10">
         <span className="text-xl font-black text-slate-900 leading-none block">{val}</span>
-        <span className="text-[9px] font-bold text-slate-400 block mt-0.5">/ 95</span>
+        <span className="text-[9px] font-bold text-slate-400 block mt-0.5">/ 100</span>
       </div>
     </div>
   );
@@ -629,7 +629,7 @@ export default function PropertyDetailPage() {
 
             {property.investment_explanation && (
               <p className="text-sm text-slate-600 bg-slate-50 rounded-xl p-4 border border-slate-100 leading-relaxed">
-                {property.investment_explanation}
+                {property.investment_explanation.replace('/95', '/100')}
               </p>
             )}
           </div>
@@ -645,7 +645,7 @@ export default function PropertyDetailPage() {
               {investmentScore !== null && <ScoreRing score={investmentScore} />}
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-bold text-slate-900">AI Investment Score: {investmentScore ?? '—'} / 95</span>
+                  <span className="text-sm font-bold text-slate-900">AI Investment Score: {investmentScore ?? '—'} / 100</span>
                   {property.investment_rating && <InvestmentRatingBadge rating={property.investment_rating} />}
                 </div>
 

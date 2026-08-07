@@ -21,11 +21,6 @@ const ICON_MAP = {Gym: Dumbbell,
   'Solar Power': Sun,
   'Rain Water Harvesting': Droplets,
   'Community Temple': Heart,
-  'Nearby School': School,
-  'Nearby Hospital': Hospital,
-  'Nearby Metro Station': Train,
-  'Nearby Shopping Mall': ShoppingBag,
-  'Nearby ATM/Bank': Banknote
 
 };
 
@@ -70,7 +65,7 @@ export default function Step2PropertyDetails() {
           /* FLAT / APARTMENT SPECIFICATIONS */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <div>
-              <label className="block text-xs font-bold text-[#424754] uppercase tracking-wider mb-1.5">BHK Configuration</label>
+              <label className="block text-xs font-bold text-[#424754] uppercase tracking-wider mb-1.5">BHK Configuration<span className="text-[#ba1a1a]">*</span></label>
               <select {...register('bhk')} className="w-full px-4 py-3 rounded-xl border border-[#c2c6d6] text-sm outline-none focus:border-[#0058be] bg-white text-[#131b2e] font-medium">
                 <option value="">-- Select BHK --</option>
                 <option value="1">1 BHK</option>
@@ -78,7 +73,7 @@ export default function Step2PropertyDetails() {
                 <option value="3">3 BHK</option>
                 <option value="4">4 BHK</option>
                 <option value="5">5+ BHK</option>
-              </select>
+              </select> 
             </div>
 
             <div>

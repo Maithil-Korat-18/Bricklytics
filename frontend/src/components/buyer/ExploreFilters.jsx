@@ -221,7 +221,7 @@ export default function ExploreFilters({ filters, onFilterChange, onReset, total
           <input
             type="range"
             min="60"
-            max="95"
+            max="100"
             step="5"
             value={filters.min_investment_score || 60}
             onChange={(e) => handleChange('min_investment_score', e.target.value === '60' ? '' : e.target.value)}

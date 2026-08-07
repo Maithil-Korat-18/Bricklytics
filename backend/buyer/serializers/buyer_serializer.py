@@ -11,9 +11,8 @@ class WishlistCreateSerializer(BaseSerializer):
     property_id = serializers.CharField()
 
 
-class SavedSearchCreateSerializer(BaseSerializer):
-    title = serializers.CharField(max_length=200)
-    filters = serializers.DictField()
+class WishlistCreateSerializer(BaseSerializer):
+    property_id = serializers.CharField()
 
 
 class VisitScheduleCreateSerializer(BaseSerializer):
@@ -44,9 +43,3 @@ class WishlistResponseSerializer(BaseModelSerializer):
     property_details = PropertyResponseSerializer(required=False, allow_null=True)
     created_at = serializers.CharField()
 
-
-class SavedSearchResponseSerializer(BaseModelSerializer):
-    id = serializers.CharField(read_only=True)
-    title = serializers.CharField()
-    filters = serializers.DictField()
-    created_at = serializers.CharField()

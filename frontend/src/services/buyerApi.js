@@ -31,21 +31,6 @@ export const buyerApi = {
     return response.data;
   },
 
-  getSavedSearches: async () => {
-    const response = await apiClient.get('/buyer/saved-searches/');
-    return response.data;
-  },
-
-  saveSearch: async (data) => {
-    const response = await apiClient.post('/buyer/saved-searches/', data);
-    return response.data;
-  },
-
-  deleteSavedSearch: async (id) => {
-    const response = await apiClient.delete(`/buyer/saved-searches/${id}/`);
-    return response.data;
-  },
-
   getScheduledVisits: async () => {
     const response = await apiClient.get('/buyer/schedule-visit/');
     return response.data;
@@ -88,12 +73,6 @@ export const buyerApi = {
 
   syncCompareList: async (propertyIds) => {
     const response = await apiClient.post('/buyer/compare/', { property_ids: propertyIds });
-    return response.data;
-  },
-
-
-  getRecentlyViewed: async () => {
-    const response = await apiClient.get('/buyer/recently-viewed/');
     return response.data;
   },
 

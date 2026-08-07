@@ -104,8 +104,8 @@ class PredictionService(BaseService):
         if asking > 0 and ai_price > 0:
             diff_pct = ((asking - ai_price) / ai_price) * 100.0
             if diff_pct <= 0:
-                # Underpriced or fair price -> score 86 to 95
-                fairness_score = min(95.0, 86.0 + min(9.0, abs(diff_pct) * 1.2))
+                # Underpriced or fair price -> score 86 to 100
+                fairness_score = min(100.0, 86.0 + min(14.0, abs(diff_pct) * 1.2))
             else:
                 # Overpriced -> score penalized
                 fairness_score = max(40.0, 82.0 - (diff_pct * 1.8))
@@ -114,14 +114,14 @@ class PredictionService(BaseService):
             fairness_score = 80.0
 
         # 2. Future Appreciation / Locality Growth Factor (25% weight)
-        # Bounded between 50 and 94 based on locality annual appreciation rate
-        appreciation_score = min(94.0, max(50.0, 55.0 + (annual_rate - 5.0) * 8.5))
+        # Bounded between 50 and 100 based on locality annual appreciation rate
+        appreciation_score = min(100.0, max(50.0, 55.0 + (annual_rate - 5.0) * 8.5))
 
         # 3. Location Quality Factor (25% weight)
         # Reuses connectivity & locality signals
         raw_conn = conditions.get('connectivity_score') or conditions.get('location_score')
         if raw_conn is not None:
-            location_score = min(94.0, max(50.0, float(raw_conn)))
+            location_score = min(100.0, max(50.0, float(raw_conn)))
         else:
             # Estimate location score from locality prominence
             locality = str(conditions.get('locality') or '').lower()
@@ -148,7 +148,7 @@ class PredictionService(BaseService):
 
         profile_score = (0.4 * type_score) + (0.4 * bhk_score) + (0.2 * age_score)
 
-        # Composite Weighted Score (Max 95)
+        # Composite Weighted Score (Max 100)
         composite = (
             0.25 * fairness_score
             + 0.25 * appreciation_score
@@ -156,8 +156,8 @@ class PredictionService(BaseService):
             + 0.25 * profile_score
         )
         
-        # Ceil max score strictly at 95 (no 99 or 100 scores)
-        score = int(round(max(40, min(95, composite))))
+        # Ceil max score strictly at 100
+        score = int(round(max(40, min(100, composite))))
 
         # Rating Tiers according to user specifications
         if score >= 90:
@@ -201,11 +201,10 @@ class PredictionService(BaseService):
         if bhk in (2, 3):
             reasons.append("✓ Popular BHK layout with high market liquidity")
 
-        explanation = f"Investment Score of {score}/95 ({rating}). Combines price fairness against AI valuation, {annual_rate:.1f}% annual locality appreciation, location quality, and property profile."
+        explanation = f"Combines price fairness against AI valuation, {annual_rate:.1f}% annual locality appreciation, location quality, and property profile."
 
         return {
             'score': score,
-            'max_score': 95,
             'rating': rating,
             'explanation': explanation,
             'reasons': reasons,

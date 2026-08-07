@@ -92,16 +92,6 @@ export const propertyApi = {
     return response.data;
   },
 
-  predictAppreciation: async (propertyId) => {
-    const response = await apiClient.post(`/seller/properties/${propertyId}/predict-appreciation/`);
-    return response.data;
-  },
-
-  getPredictionHistory: async (propertyId) => {
-    const response = await apiClient.get(`/seller/properties/${propertyId}/predictions/`);
-    return response.data;
-  },
-
   // ── OFFLINE MAP ENDPOINTS ──────────────────────────────────────────────────
 
   searchMapLocation: async (query) => {
@@ -122,10 +112,6 @@ export const propertyApi = {
     return response.data;
   },
 
-  replyToInquiry: async (inquiryId, replyText) => {
-    const response = await apiClient.post(`/seller/inquiries/${inquiryId}/reply/`, { reply: replyText });
-    return response.data;
-  },
 
   // ── SELLER REQUEST MANAGEMENT & PROFILE ENDPOINTS ─────────────────────────
 

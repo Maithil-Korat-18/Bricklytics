@@ -9,10 +9,8 @@ from seller.services.property_service import PropertyService
 from seller.serializers.property_serializer import PropertyResponseSerializer
 from buyer.serializers.buyer_serializer import (
     WishlistCreateSerializer,
-    SavedSearchCreateSerializer,
     VisitScheduleCreateSerializer,
     VisitScheduleResponseSerializer,
-    SavedSearchResponseSerializer,
 )
 from accounts.permissions import IsAuthenticated, IsBuyer
 from core.exceptions.base import ValidationError, ResourceNotFoundError
@@ -160,48 +158,6 @@ class WishlistDeleteView(BaseAPIView):
     def delete(self, request, property_id):
         res = self.service.remove_wishlist(user_id=str(request.user.id), property_id=property_id)
         return self.success_response(data=res, message="Property removed from wishlist.")
-
-
-class SavedSearchView(BaseAPIView):
-    permission_classes = [IsAuthenticated]
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.service = BuyerService()
-
-    def get(self, request):
-        searches = self.service.get_saved_searches(str(request.user.id))
-        return self.success_response(
-            data=SavedSearchResponseSerializer(searches, many=True).data,
-            message="Saved searches fetched."
-        )
-
-    def post(self, request):
-        serializer = SavedSearchCreateSerializer(data=request.data)
-        if not serializer.is_valid():
-            raise ValidationError(message="Validation failed.", errors=serializer.errors)
-
-        res = self.service.save_search(
-            user_id=str(request.user.id),
-            title=serializer.validated_data['title'],
-            filters=serializer.validated_data['filters']
-        )
-        return self.created_response(
-            data=SavedSearchResponseSerializer(res).data,
-            message="Search saved successfully."
-        )
-
-
-class SavedSearchDeleteView(BaseAPIView):
-    permission_classes = [IsAuthenticated]
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.service = BuyerService()
-
-    def delete(self, request, pk):
-        self.service.delete_saved_search(str(request.user.id), pk)
-        return self.success_response(data={}, message="Saved search deleted.")
 
 
 class ScheduleVisitView(BaseAPIView):

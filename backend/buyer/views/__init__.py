@@ -4,8 +4,6 @@ from buyer.views.buyer_views import (
     BuyerPropertyDetailView,
     WishlistView,
     WishlistDeleteView,
-    SavedSearchView,
-    SavedSearchDeleteView,
     ScheduleVisitView,
     PropertyCompareView,
     RecentlyViewedView,
@@ -17,9 +15,8 @@ __all__ = [
     'BuyerPropertyDetailView',
     'WishlistView',
     'WishlistDeleteView',
-    'SavedSearchView',
-    'SavedSearchDeleteView',
     'ScheduleVisitView',
     'PropertyCompareView',
     'RecentlyViewedView',
 ]
+

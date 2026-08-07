@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, Edit, Eye, Plus, Trash2 } from 'lucide-react';
+import { Building2, Edit, Eye, Plus, Trash2, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Badge from '../common/Badge';
 import { ROUTES, getEditPropertyPath, getSellerPropertyDetailsPath } from '../../constants/routes';
@@ -32,18 +32,25 @@ export default function PropertyTable({ properties = [], onDelete }) {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[780px] border-collapse text-left">
+          <table className="w-full min-w-[850px] border-collapse text-left">
             <thead><tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-semibold uppercase tracking-wider text-slate-400">
-              <th className="px-5 py-3">Property</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Price</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Created</th><th className="px-5 py-3 text-right">Actions</th>
+              <th className="px-5 py-3">Property</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Price</th><th className="px-5 py-3">AI Investment Score</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Created</th><th className="px-5 py-3 text-right">Actions</th>
             </tr></thead>
             <tbody className="divide-y divide-slate-100 text-sm">
               {properties.map((property) => {
                 const propertyId = property.id;
                 const coverImage = getPropertyMediaUrl(property.images?.find((image) => image.is_cover)?.url || property.images?.[0]?.url);
+                const score = property.investment_score || 85;
                 return <tr key={propertyId} className="group transition-colors hover:bg-slate-50/50">
                   <td className="px-5 py-4"><div className="flex items-center gap-3">{coverImage ? <img src={coverImage} alt={property.title} className="h-12 w-12 rounded-xl object-cover ring-1 ring-slate-200" /> : <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400"><Building2 className="h-5 w-5" /></div>}<div><p className="font-semibold text-slate-900 transition-colors group-hover:text-blue-600">{property.title || 'Untitled Property'}</p><p className="text-xs text-slate-400">{property.locality || property.city || '—'}</p></div></div></td>
                   <td className="px-5 py-4 font-medium capitalize text-slate-600">{property.property_type || 'Property'}</td>
                   <td className="px-5 py-4 font-semibold text-slate-900">{formatPrice(property.price)}</td>
+                  <td className="px-5 py-4">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-extrabold shadow-2xs">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      {score} / 100
+                    </span>
+                  </td>
                   <td className="px-5 py-4"><Badge status={property.status || 'draft'} /></td>
                   <td className="px-5 py-4 text-slate-600">{formatDate(property.created_at)}</td>
                   <td className="px-5 py-4"><div className="flex items-center justify-end gap-1"><Link aria-label={`View ${property.title}`} to={getSellerPropertyDetailsPath(propertyId)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"><Eye className="h-4 w-4" /></Link><Link aria-label={`Edit ${property.title}`} to={getEditPropertyPath(propertyId)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"><Edit className="h-4 w-4" /></Link><button type="button" aria-label={`Delete ${property.title}`} onClick={() => onDelete?.(property)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4" /></button></div></td>

@@ -138,12 +138,14 @@ class Property(SellerBaseDocument):
     prediction_fingerprint = me.StringField(required=False, null=True)
     base_ml_price = me.FloatField(required=False, null=True)
     amenity_adjustment = me.FloatField(required=False, null=True)
+    adjustment_breakdown = me.DictField(required=False, null=True)
     appreciation_methodology = me.StringField(required=False, null=True)
     prediction_timestamp = me.DateTimeField(required=False, null=True)
 
 
     meta = {
         'collection': 'properties',
+        'strict': False,
         'indexes': [
             'title',
             'city',

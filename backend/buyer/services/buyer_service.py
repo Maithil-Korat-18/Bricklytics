@@ -6,7 +6,6 @@ import logging
 from core.base.service import BaseService
 from buyer.repositories.buyer_repository import (
     WishlistRepository,
-    SavedSearchRepository,
     VisitScheduleRepository,
     PropertyViewRepository,
     PropertyCompareRepository,
@@ -21,11 +20,11 @@ class BuyerService(BaseService):
     def __init__(self):
         super().__init__()
         self.wishlist_repo = WishlistRepository()
-        self.search_repo = SavedSearchRepository()
         self.visit_repo = VisitScheduleRepository()
         self.view_repo = PropertyViewRepository()
         self.compare_repo = PropertyCompareRepository()
         self.property_repo = PropertyRepository()
+
 
 
     def toggle_wishlist(self, user_id: str, property_id: str) -> dict:
@@ -66,25 +65,6 @@ class BuyerService(BaseService):
             except Exception:
                 continue
         return results
-
-    def save_search(self, user_id: str, title: str, filters: dict) -> dict:
-        self._log_operation('save_search', user_id=user_id, title=title)
-        return self.search_repo.create({
-            'user_id': user_id,
-            'title': title,
-            'filters': filters,
-        })
-
-    def get_saved_searches(self, user_id: str) -> list[dict]:
-        self._log_operation('get_saved_searches', user_id=user_id)
-        return self.search_repo.find_by_user(user_id)
-
-    def delete_saved_search(self, user_id: str, search_id: str) -> None:
-        self._log_operation('delete_saved_search', user_id=user_id, search_id=search_id)
-        search_item = self.search_repo.find_by_id(search_id)
-        if search_item.get('user_id') != user_id:
-            raise ValidationError("You do not have permission to delete this saved search.")
-        self.search_repo.delete(search_id)
 
     def schedule_visit(self, user, data: dict) -> dict:
         self._log_operation('schedule_visit', user_id=str(user.id), property_id=data['property_id'])
@@ -490,7 +470,7 @@ class BuyerService(BaseService):
         self._log_operation('get_dashboard', user_id=user_id)
         
         wishlist_items = self.get_wishlist(user_id)
-        saved_searches = self.get_saved_searches(user_id)
+        saved_searches = []
         visits = self.get_scheduled_visits(user_id)
         recently_viewed = self.get_recently_viewed(user_id)
 

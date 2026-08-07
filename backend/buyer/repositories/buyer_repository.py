@@ -4,7 +4,6 @@ buyer/repositories/buyer_repository.py — Data Access for Buyer Collections
 
 from core.base.repository import BaseRepository
 from buyer.models.wishlist import Wishlist
-from buyer.models.saved_search import SavedSearch
 from buyer.models.visit_schedule import VisitSchedule
 from buyer.models.property_view import PropertyView
 from buyer.models.property_compare import PropertyCompare
@@ -25,12 +24,6 @@ class WishlistRepository(BaseRepository):
             item.soft_delete()
         return True
 
-
-class SavedSearchRepository(BaseRepository):
-    model = SavedSearch
-
-    def find_by_user(self, user_id: str) -> list[dict]:
-        return self.find_all(filters={'user_id': user_id}, limit=100)
 
 
 class VisitScheduleRepository(BaseRepository):

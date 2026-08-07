@@ -16,8 +16,6 @@ from seller.views.prediction_views import (
     PredictPriceView,
     PredictConditionView,
     AhmedabadLocationsView,
-    PredictAppreciationView,
-    PredictionHistoryView,
 )
 from seller.views.map_views import (
     OfflineMapSearchView,
@@ -43,6 +41,5 @@ urlpatterns = [
 
     # ML Property-specific Prediction endpoints
     path('<str:pk>/predict-price/', PredictPriceView.as_view(), name='property-predict-price'),
-    path('<str:pk>/predict-appreciation/', PredictAppreciationView.as_view(), name='property-predict-appreciation'),
-    path('<str:pk>/predictions/', PredictionHistoryView.as_view(), name='property-prediction-history'),
 ]
+

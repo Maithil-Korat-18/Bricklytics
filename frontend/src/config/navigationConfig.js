@@ -36,6 +36,12 @@ export const sellerNavigationConfig = [
     icon: LineChart,
     exact: false,
   },
+  {
+    title: 'My Profile',
+    path: ROUTES.SELLER_PROFILE,
+    icon: User,
+    exact: false,
+  },
 ];
 
 export const buyerNavigationConfig = [

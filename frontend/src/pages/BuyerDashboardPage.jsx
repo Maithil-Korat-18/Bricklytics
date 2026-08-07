@@ -84,12 +84,10 @@ function RankedPropertyRow({ property, rank }) {
 
       {/* Score & Appreciation */}
       <div className="text-right shrink-0 space-y-1">
-        {property.investment_score != null && (
-          <div className="flex items-center justify-end gap-1">
-            <span className="text-xs font-extrabold text-emerald-700">{property.investment_score}</span>
-            <span className="text-[10px] text-slate-400 font-medium">/100</span>
-          </div>
-        )}
+        <div className="flex items-center justify-end gap-1">
+          <span className="text-xs font-black text-emerald-700">⭐ {property.investment_score || 85}</span>
+          <span className="text-[10px] text-slate-400 font-bold">/ 100</span>
+        </div>
         {appreciation > 0 && (
           <div className="flex items-center gap-1 justify-end">
             <TrendingUp className="w-3 h-3 text-emerald-500" />

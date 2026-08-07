@@ -11,8 +11,6 @@ from buyer.views.buyer_views import (
     BuyerPropertyDetailView,
     WishlistView,
     WishlistDeleteView,
-    SavedSearchView,
-    SavedSearchDeleteView,
     ScheduleVisitView,
     BuyerReplyView,
     PropertyCompareView,
@@ -30,12 +28,11 @@ urlpatterns = [
     path('properties/<str:pk>/alternatives/', BetterAlternativesView.as_view(), name='buyer-property-alternatives'),
     path('wishlist/', WishlistView.as_view(), name='buyer-wishlist'),
     path('wishlist/<str:property_id>/', WishlistDeleteView.as_view(), name='buyer-wishlist-delete'),
-    path('saved-searches/', SavedSearchView.as_view(), name='buyer-saved-searches'),
-    path('saved-searches/<str:pk>/', SavedSearchDeleteView.as_view(), name='buyer-saved-search-delete'),
     path('schedule-visit/', ScheduleVisitView.as_view(), name='buyer-schedule-visit'),
     path('schedule-visit/<str:pk>/reply/', BuyerReplyView.as_view(), name='buyer-visit-reply'),
     path('compare/', PropertyCompareView.as_view(), name='buyer-compare'),
     path('recently-viewed/', RecentlyViewedView.as_view(), name='buyer-recently-viewed'),
     path('top-properties/', TopPropertiesView.as_view(), name='buyer-top-properties'),
 ]
+
 

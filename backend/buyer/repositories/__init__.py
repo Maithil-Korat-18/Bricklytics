@@ -1,6 +1,5 @@
 from buyer.repositories.buyer_repository import (
     WishlistRepository,
-    SavedSearchRepository,
     VisitScheduleRepository,
     PropertyViewRepository,
     PropertyCompareRepository,
@@ -8,9 +7,9 @@ from buyer.repositories.buyer_repository import (
 
 __all__ = [
     'WishlistRepository',
-    'SavedSearchRepository',
     'VisitScheduleRepository',
     'PropertyViewRepository',
     'PropertyCompareRepository',
 ]
+
 

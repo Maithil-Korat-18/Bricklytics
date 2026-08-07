@@ -56,32 +56,3 @@ class AhmedabadLocationsView(BaseAPIView):
             message='Ahmedabad locations fetched successfully.',
         )
 
-
-class PredictAppreciationView(BaseAPIView):
-    """POST /api/seller/properties/<pk>/predict-appreciation/"""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.service = PredictionService()
-
-    def post(self, request, pk):
-        result = self.service.predict_appreciation(pk)
-        return self.success_response(
-            data=result,
-            message='Appreciation prediction completed successfully.',
-        )
-
-
-class PredictionHistoryView(BaseAPIView):
-    """GET /api/seller/properties/<pk>/predictions/"""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.service = PredictionService()
-
-    def get(self, request, pk):
-        history = self.service.get_prediction_history(pk)
-        return self.success_response(
-            data=history,
-            message='Prediction history fetched.',
-        )

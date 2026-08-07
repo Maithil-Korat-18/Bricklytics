@@ -293,7 +293,7 @@ export default function PropertyDetailsPage() {
                   </div>
                   <div className="p-2 rounded-lg bg-white/5">
                     <span className="block text-[10px] text-slate-400 font-bold">SCORE</span>
-                    <span className="text-xs font-extrabold text-amber-300">{investmentScore}/95</span>
+                    <span className="text-xs font-extrabold text-amber-300">{investmentScore}/100</span>
                   </div>
                 </div>
               </div>

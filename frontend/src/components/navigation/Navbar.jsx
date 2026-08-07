@@ -15,7 +15,7 @@ export default function Navbar({ setMobileOpen }) {
     navigate(ROUTES.HOME, { replace: true });
   };
 
-  const profilePath = user?.role === 'seller' ? ROUTES.SETTINGS : ROUTES.BUYER_PROFILE;
+  const profilePath = user?.role === 'seller' ? ROUTES.SELLER_PROFILE : ROUTES.BUYER_PROFILE;
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 flex items-center justify-between">

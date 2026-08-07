@@ -175,14 +175,19 @@ export default function PropertyCard({ property, isFavoriteInitial = false, onFa
             </div>
           </div>
 
-          {/* AI Score Circle & Description */}
+          {/* AI Score Badge & Description */}
           <div className="flex items-center gap-3 pt-1 border-t border-blue-100/60">
-            <div className="w-10 h-10 rounded-full border-2 border-emerald-500 bg-emerald-50 flex items-center justify-center font-black text-emerald-700 text-sm shrink-0 shadow-xs">
-              {score}
+            <div className="w-12 h-12 rounded-full border-2 border-emerald-500 bg-gradient-to-br from-emerald-50 to-teal-50 flex flex-col items-center justify-center text-emerald-700 shrink-0 shadow-xs leading-none">
+              <span className="text-xs font-black">{score}</span>
             </div>
-            <p className="text-[11px] font-medium text-slate-600 leading-snug">
-              {investmentDesc}
-            </p>
+            <div>
+              <div className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-emerald-600" /> AI Investment Score: {score} / 100
+              </div>
+              <p className="text-[11px] font-medium text-slate-600 leading-snug line-clamp-2">
+                {investmentDesc}
+              </p>
+            </div>
           </div>
         </div>
 

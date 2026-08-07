@@ -193,7 +193,7 @@ export default function SellerDashboardPage() {
         </button>
       </div>
 
-      {/* ── Compact Meeting Requests Notification Banner ────────────────────────────── */}
+      {/* ── Compact Meeting Requests Notification Banner ──────────────────────────────
       {requestsLoading ? (
         <div className="h-16 rounded-2xl bg-white border border-slate-200/80 animate-pulse" />
       ) : pendingRequestsCount > 0 ? (
@@ -234,7 +234,7 @@ export default function SellerDashboardPage() {
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
-      )}
+      )} */}
 
       {/* 1. Statistics Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

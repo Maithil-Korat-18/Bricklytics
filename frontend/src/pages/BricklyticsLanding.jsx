@@ -502,7 +502,7 @@ function Navbar({ onNavigate }) {
     <nav className="bl-navbar-floating bl-glass" style={{ borderRadius: 999, padding: "10px 10px 10px 22px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div onClick={() => scrollTo("hero")} style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'Inter Tight',sans-serif", fontWeight: 800, fontSize: 19, cursor: "pointer" }}>
-          <img src={"../constants/logo.png"} alt="Bricklytics logo" style={{ width: 26, height: 26, borderRadius: 8, objectFit: "cover" }} />
+          <img src={"../../public/logo.png"} alt="Bricklytics logo" style={{ width: 26, height: 26, borderRadius: 8, objectFit: "cover" }} />
           Bricklytics
         </div>
 
@@ -646,7 +646,7 @@ function Hero({ onNavigate }) {
         </div>
 
         {/* Subtitle + CTA */}
-        <div style={{ marginTop: 32, maxWidth: 480 }}>
+        {/* <div style={{ marginTop: 32, maxWidth: 480 }}>
           <p style={{
             fontSize: 17, lineHeight: 1.6,
             color: "var(--ink-soft)",
@@ -666,7 +666,7 @@ function Hero({ onNavigate }) {
               See it in action
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* AI model badge */}
         <div className="bl-mono" style={{
@@ -678,7 +678,6 @@ function Hero({ onNavigate }) {
           opacity: 0.6,
           letterSpacing: "0.06em",
         }}>
-          AI_model_v2.4
         </div>
 
         {/* Floating glass stat cards */}
