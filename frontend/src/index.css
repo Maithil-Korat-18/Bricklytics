@@ -1,0 +1,331 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* ── Bricklytics Intelligence System — Design Token Overrides ─────────────── */
+
+@layer base {
+  body {
+    @apply antialiased min-h-screen;
+    font-family: 'Inter', 'Geist', system-ui, sans-serif;
+    background-color: var(--paper, #FAFAF8);
+    color: var(--ink, #14171F);
+  }
+
+  ::selection {
+    background-color: #3E6FE0;
+    color: #ffffff;
+  }
+}
+
+/* ── CSS Custom Properties — Master Design System Tokens ─────────────────── */
+:root {
+  --paper:                      #FAFAF8;
+  --ink:                        #14171F;
+  --ink-soft:                   #5B6270;
+  --signal:                     #3E6FE0;
+  --signal-deep:                #2A54BE;
+  --match-green:                #2FAE6E;
+  --terracotta:                 #C1694F;
+  --blue-glow:                  rgba(62, 111, 224, 0.16);
+  --purple-glow:                rgba(130, 94, 235, 0.12);
+  --grid-line:                  rgba(20, 23, 31, 0.05);
+  --line-dim:                   rgba(20, 23, 31, 0.10);
+
+  --bg:                         var(--paper);
+  --surface:                    #FFFFFF;
+  --surface-dim:                #F3F4F6;
+  --surface-bright:             #FAFAF8;
+  --surface-container-lowest:   #FFFFFF;
+  --surface-container-low:      #F8F9FA;
+  --surface-container:          #F0F3FA;
+  --surface-container-high:     #E5EAEF;
+  --surface-container-highest:  #DAE2FD;
+  --on-surface:                 #14171F;
+  --on-surface-variant:         #5B6270;
+  --inverse-surface:            #14171F;
+  --inverse-on-surface:         #FAFAF8;
+  --outline:                    #727785;
+  --outline-variant:            #C2C6D6;
+  --surface-tint:               #3E6FE0;
+  --primary:                    #3E6FE0;
+  --on-primary:                 #FFFFFF;
+  --primary-container:          #3E6FE0;
+  --on-primary-container:       #FFFFFF;
+  --inverse-primary:            #ADC6FF;
+  --secondary:                  #505F76;
+  --on-secondary:               #FFFFFF;
+  --secondary-container:        #D0E1FB;
+  --on-secondary-container:     #54647A;
+  --tertiary:                   #2FAE6E;
+  --on-tertiary:                #FFFFFF;
+  --tertiary-container:         #2FAE6E;
+  --on-tertiary-container:      #FFFFFF;
+  --error:                      #BA1A1A;
+  --on-error:                   #FFFFFF;
+  --error-container:            #FFDAD6;
+  --on-error-container:         #93000A;
+  --background:                 #FAFAF8;
+  --on-background:              #14171F;
+  --surface-variant:            #E5EAEF;
+
+  /* Component tokens */
+  --card-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --card-shadow-hover: 0 10px 20px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --radius-sm:   0.25rem;
+  --radius:      0.5rem;
+  --radius-md:   0.75rem;
+  --radius-lg:   1rem;
+  --radius-xl:   1.5rem;
+  --radius-full: 9999px;
+}
+
+/* ── Animation Keyframes ──────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 88, 190, 0.3); }
+  70%  { box-shadow: 0 0 0 8px rgba(0, 88, 190, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 88, 190, 0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Utility Animation Classes ────────────────────────────────────────────── */
+.animate-fadeIn      { animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-fadeInScale { animation: fadeInScale 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slideInUp   { animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-pulse-ring  { animation: pulse-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+/* ── Card Elevation System ────────────────────────────────────────────────── */
+.card-lvl1 {
+  background-color: #ffffff;
+  border: 1px solid #e2e7ff;
+  box-shadow: var(--card-shadow);
+  border-radius: var(--radius-lg);
+}
+
+.card-lvl1:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+.card-lvl2 {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(194, 198, 214, 0.5);
+  box-shadow: var(--card-shadow);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Light Card (legacy compatible) ──────────────────────────────────────── */
+.light-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e7ff;
+  box-shadow: var(--card-shadow);
+  border-radius: var(--radius-lg);
+}
+
+.light-card-hover {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.light-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover);
+  border-color: #c2c6d6;
+}
+
+/* ── Glassmorphism ─────────────────────────────────────────────────────────── */
+.glass-header {
+  background: rgba(250, 248, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e2e7ff;
+}
+
+.glass-layer {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── AI Insight Container ─────────────────────────────────────────────────── */
+.bg-ai-insight {
+  background: linear-gradient(135deg, rgba(216, 226, 255, 0.6) 0%, rgba(250, 248, 255, 1) 100%);
+  border: 1px solid rgba(173, 198, 255, 0.5);
+}
+
+/* ── Shadow Utilities ─────────────────────────────────────────────────────── */
+.shadow-ambient    { box-shadow: var(--card-shadow); }
+.shadow-card-soft  { box-shadow: var(--card-shadow); }
+
+/* ── Status Chip System ───────────────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.chip-success {
+  background-color: rgba(0, 105, 71, 0.1);
+  color: #006947;
+  border: 1px solid rgba(0, 105, 71, 0.2);
+}
+
+.chip-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.chip-error {
+  background-color: rgba(186, 26, 26, 0.08);
+  color: #ba1a1a;
+  border: 1px solid rgba(186, 26, 26, 0.15);
+}
+
+.chip-primary {
+  background-color: rgba(0, 88, 190, 0.1);
+  color: #0058be;
+  border: 1px solid rgba(0, 88, 190, 0.2);
+}
+
+.chip-secondary {
+  background-color: rgba(80, 95, 118, 0.1);
+  color: #505f76;
+  border: 1px solid rgba(80, 95, 118, 0.15);
+}
+
+/* ── Skeleton Shimmer ─────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #f2f3ff 25%, #eaedff 37%, #f2f3ff 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius);
+}
+
+/* ── Wizard Stepper ───────────────────────────────────────────────────────── */
+.step-connector {
+  flex: 1;
+  height: 1.5px;
+  background-color: #c2c6d6;
+  margin: 0 -2px;
+  position: relative;
+  top: -16px;
+}
+
+.step-connector-active {
+  background-color: #0058be;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: #f2f3ff; }
+::-webkit-scrollbar-thumb  { background: #c2c6d6; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #727785; }
+
+/* ── Focus Ring ────────────────────────────────────────────────────────────── */
+.focus-ring:focus-visible {
+  outline: 2px solid #0058be;
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+/* ── Sidebar Clean ─────────────────────────────────────────────────────────── */
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.18s ease;
+  color: #424754;
+  text-decoration: none;
+}
+
+.sidebar-nav-item:hover {
+  background-color: #f2f3ff;
+  color: #131b2e;
+}
+
+.sidebar-nav-item.active {
+  background-color: #d8e2ff;
+  color: #0058be;
+  font-weight: 600;
+}
+
+/* ── Data Table ─────────────────────────────────────────────────────────────── */
+.data-table th {
+  padding: 0 16px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #424754;
+  text-align: left;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e2e7ff;
+}
+
+.data-table td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #131b2e;
+  border-bottom: 1px solid #f2f3ff;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+
+  body * { visibility: hidden; }
+  #comparison-export, #comparison-export * { visibility: visible; }
+  #comparison-export {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    color: #131b2e;
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-hide { display: none !important; }
+  .comparison-print-table { overflow: visible !important; box-shadow: none !important; }
+  .comparison-table-content { min-width: 0 !important; }
+  .comparison-print-table .grid { font-size: 8px !important; }
+  .comparison-print-table .grid > div { padding: 5px !important; overflow-wrap: anywhere; }
+  section { break-inside: avoid; page-break-inside: avoid; }
+}
+
+/* ── Chart Container ─────────────────────────────────────────────────────────── */
+.chart-wrap {
+  background-color: #f2f3ff;
+  border-radius: var(--radius-md);
+  padding: 16px;
+}

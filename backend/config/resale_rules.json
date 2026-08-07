@@ -1,0 +1,36 @@
+{
+  "property_age": {
+    "0_to_2": 0.0,
+    "3_to_5": -3.0,
+    "6_to_10": -7.0,
+    "11_to_15": -12.0,
+    "above_15": -18.0
+  },
+  "renovation_status": {
+    "newly renovated": 6.0,
+    "fully reconstructed": 6.0,
+    "newly_renovated": 6.0,
+    "fully_reconstructed": 6.0,
+    "major renovation": 3.0,
+    "major_renovation": 3.0,
+    "minor renovation": 0.0,
+    "minor_renovation": 0.0,
+    "never renovated": -3.0,
+    "never_renovated": -3.0,
+    "requires reconstruction": -8.0,
+    "requires_reconstruction": -8.0,
+    "needs renovation": -8.0,
+    "needs_renovation": -8.0
+  },
+  "facing_direction": {
+    "east": 2.0,
+    "north": 2.0,
+    "north-east": 2.0,
+    "northeast": 2.0,
+    "ne": 2.0,
+    "west": 0.0,
+    "w": 0.0,
+    "south": -2.0,
+    "s": -2.0
+  }
+}

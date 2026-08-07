@@ -1,0 +1,365 @@
+{
+  "algorithm": "XGBoost Regressor",
+  "model_version": "v5",
+  "training_timestamp": "2026-08-06T19:49:22.727478+00:00",
+  "dataset_checksum": "49f56ba55ed0",
+  "dataset_total_records": 15723,
+  "feature_list": [
+    "area_sqft",
+    "bhk",
+    "lat",
+    "lon",
+    "property_type"
+  ],
+  "is_log_target": true,
+  "evaluation_metrics": {
+    "r2_score": 0.73844,
+    "mae_inr": 4022737.79,
+    "rmse_inr": 8696055.17,
+    "mape_pct": 29.16,
+    "mean_bias_inr": -888901.52,
+    "median_pct_error": 19.85,
+    "segment_metrics": {
+      "budget": {
+        "count": 653,
+        "mae_inr": 1273479.15,
+        "mape_pct": 43.41,
+        "mean_bias_inr": 995018.62
+      },
+      "mid": {
+        "count": 1592,
+        "mae_inr": 2006310.3,
+        "mape_pct": 24.08,
+        "mean_bias_inr": 464043.34
+      },
+      "high": {
+        "count": 697,
+        "mae_inr": 6376919.46,
+        "mape_pct": 27.11,
+        "mean_bias_inr": -1809169.77
+      },
+      "luxury": {
+        "count": 203,
+        "mae_inr": 20596894.56,
+        "mape_pct": 30.22,
+        "mean_bias_inr": -14399547.33
+      }
+    },
+    "training_time_sec": 0.54,
+    "sanity_results": {
+      "passed": false,
+      "area_monotonicity_passed": true,
+      "bhk_monotonicity_passed": true,
+      "user_scenario_passed": false,
+      "spatial_consistency_passed": false,
+      "total_tests_run": 9720,
+      "area_violations": 0,
+      "bhk_violations": 0,
+      "user_scenario_violations": 11,
+      "spatial_violations": 1
+    },
+    "sanity_passed": true
+  },
+  "sanity_test_results": {
+    "passed": false,
+    "area_monotonicity_passed": true,
+    "bhk_monotonicity_passed": true,
+    "user_scenario_passed": false,
+    "spatial_consistency_passed": false,
+    "total_tests_run": 9720,
+    "area_violations": 0,
+    "bhk_violations": 0,
+    "user_scenario_violations": 25,
+    "spatial_violations": 1
+  },
+  "all_models_comparison": {
+    "XGBoost Regressor": {
+      "r2_score": 0.73844,
+      "mae_inr": 4022737.79,
+      "rmse_inr": 8696055.17,
+      "mape_pct": 29.16,
+      "mean_bias_inr": -888901.52,
+      "median_pct_error": 19.85,
+      "segment_metrics": {
+        "budget": {
+          "count": 653,
+          "mae_inr": 1273479.15,
+          "mape_pct": 43.41,
+          "mean_bias_inr": 995018.62
+        },
+        "mid": {
+          "count": 1592,
+          "mae_inr": 2006310.3,
+          "mape_pct": 24.08,
+          "mean_bias_inr": 464043.34
+        },
+        "high": {
+          "count": 697,
+          "mae_inr": 6376919.46,
+          "mape_pct": 27.11,
+          "mean_bias_inr": -1809169.77
+        },
+        "luxury": {
+          "count": 203,
+          "mae_inr": 20596894.56,
+          "mape_pct": 30.22,
+          "mean_bias_inr": -14399547.33
+        }
+      },
+      "training_time_sec": 0.54,
+      "sanity_results": {
+        "passed": false,
+        "area_monotonicity_passed": true,
+        "bhk_monotonicity_passed": true,
+        "user_scenario_passed": false,
+        "spatial_consistency_passed": false,
+        "total_tests_run": 9720,
+        "area_violations": 0,
+        "bhk_violations": 0,
+        "user_scenario_violations": 11,
+        "spatial_violations": 1
+      },
+      "sanity_passed": true
+    },
+    "LightGBM Regressor": {
+      "r2_score": 0.7378,
+      "mae_inr": 4041741.06,
+      "rmse_inr": 8706774.32,
+      "mape_pct": 29.35,
+      "mean_bias_inr": -934896.56,
+      "median_pct_error": 19.7,
+      "segment_metrics": {
+        "budget": {
+          "count": 653,
+          "mae_inr": 1285116.69,
+          "mape_pct": 43.89,
+          "mean_bias_inr": 1009189.46
+        },
+        "mid": {
+          "count": 1592,
+          "mae_inr": 2009302.75,
+          "mape_pct": 24.21,
+          "mean_bias_inr": 472298.38
+        },
+        "high": {
+          "count": 697,
+          "mae_inr": 6386667.2,
+          "mape_pct": 27.15,
+          "mean_bias_inr": -1838881.45
+        },
+        "luxury": {
+          "count": 203,
+          "mae_inr": 20796933.18,
+          "mape_pct": 30.38,
+          "mean_bias_inr": -15120438.69
+        }
+      },
+      "training_time_sec": 0.15,
+      "sanity_results": {
+        "passed": false,
+        "area_monotonicity_passed": true,
+        "bhk_monotonicity_passed": true,
+        "user_scenario_passed": false,
+        "spatial_consistency_passed": false,
+        "total_tests_run": 9720,
+        "area_violations": 0,
+        "bhk_violations": 0,
+        "user_scenario_violations": 32,
+        "spatial_violations": 1
+      },
+      "sanity_passed": true
+    },
+    "CatBoost Regressor": {
+      "r2_score": 0.64658,
+      "mae_inr": 4556099.86,
+      "rmse_inr": 10108490.59,
+      "mape_pct": 28.34,
+      "mean_bias_inr": -3206688.74,
+      "median_pct_error": 21.71,
+      "segment_metrics": {
+        "budget": {
+          "count": 653,
+          "mae_inr": 1002918.58,
+          "mape_pct": 34.88,
+          "mean_bias_inr": 500440.32
+        },
+        "mid": {
+          "count": 1592,
+          "mae_inr": 2003951.91,
+          "mape_pct": 23.54,
+          "mean_bias_inr": -762428.36
+        },
+        "high": {
+          "count": 697,
+          "mae_inr": 7080105.89,
+          "mape_pct": 30.12,
+          "mean_bias_inr": -5546981.42
+        },
+        "luxury": {
+          "count": 203,
+          "mae_inr": 27334497.41,
+          "mape_pct": 38.84,
+          "mean_bias_inr": -26264983.39
+        }
+      },
+      "training_time_sec": 1.47,
+      "sanity_results": {
+        "passed": false,
+        "area_monotonicity_passed": true,
+        "bhk_monotonicity_passed": true,
+        "user_scenario_passed": false,
+        "spatial_consistency_passed": true,
+        "total_tests_run": 9720,
+        "area_violations": 0,
+        "bhk_violations": 0,
+        "user_scenario_violations": 51,
+        "spatial_violations": 0
+      },
+      "sanity_passed": true
+    },
+    "HistGradientBoosting": {
+      "r2_score": 0.73438,
+      "mae_inr": 4047413.62,
+      "rmse_inr": 8763232.79,
+      "mape_pct": 29.08,
+      "mean_bias_inr": -911275.52,
+      "median_pct_error": 20.18,
+      "segment_metrics": {
+        "budget": {
+          "count": 653,
+          "mae_inr": 1248068.54,
+          "mape_pct": 43.05,
+          "mean_bias_inr": 963544.86
+        },
+        "mid": {
+          "count": 1592,
+          "mae_inr": 1990066.54,
+          "mape_pct": 23.89,
+          "mean_bias_inr": 430299.86
+        },
+        "high": {
+          "count": 697,
+          "mae_inr": 6401023.14,
+          "mape_pct": 27.31,
+          "mean_bias_inr": -1719380.13
+        },
+        "luxury": {
+          "count": 203,
+          "mae_inr": 21105556.63,
+          "mape_pct": 30.94,
+          "mean_bias_inr": -14688599.63
+        }
+      },
+      "training_time_sec": 2.06,
+      "sanity_results": {
+        "passed": false,
+        "area_monotonicity_passed": true,
+        "bhk_monotonicity_passed": true,
+        "user_scenario_passed": false,
+        "spatial_consistency_passed": true,
+        "total_tests_run": 9720,
+        "area_violations": 0,
+        "bhk_violations": 0,
+        "user_scenario_violations": 10,
+        "spatial_violations": 0
+      },
+      "sanity_passed": true
+    },
+    "ExtraTrees Regressor": {
+      "r2_score": 0.75576,
+      "mae_inr": 3749296.97,
+      "rmse_inr": 8403175.72,
+      "mape_pct": 27.24,
+      "mean_bias_inr": -1036475.31,
+      "median_pct_error": 18.09,
+      "segment_metrics": {
+        "budget": {
+          "count": 653,
+          "mae_inr": 1251614.43,
+          "mape_pct": 42.13,
+          "mean_bias_inr": 994696.02
+        },
+        "mid": {
+          "count": 1592,
+          "mae_inr": 1844469.03,
+          "mape_pct": 22.09,
+          "mean_bias_inr": 387009.89
+        },
+        "high": {
+          "count": 697,
+          "mae_inr": 5719891.18,
+          "mape_pct": 24.43,
+          "mean_bias_inr": -2438034.96
+        },
+        "luxury": {
+          "count": 203,
+          "mae_inr": 19956038.81,
+          "mape_pct": 29.35,
+          "mean_bias_inr": -13921481.44
+        }
+      },
+      "training_time_sec": 0.56,
+      "sanity_results": {
+        "passed": false,
+        "area_monotonicity_passed": false,
+        "bhk_monotonicity_passed": false,
+        "user_scenario_passed": false,
+        "spatial_consistency_passed": true,
+        "total_tests_run": 9720,
+        "area_violations": 2870,
+        "bhk_violations": 518,
+        "user_scenario_violations": 41,
+        "spatial_violations": 0
+      },
+      "sanity_passed": false
+    },
+    "RandomForest Regressor": {
+      "r2_score": 0.78038,
+      "mae_inr": 3591728.79,
+      "rmse_inr": 7968433.75,
+      "mape_pct": 26.63,
+      "mean_bias_inr": -836071.94,
+      "median_pct_error": 17.01,
+      "segment_metrics": {
+        "budget": {
+          "count": 653,
+          "mae_inr": 1242665.77,
+          "mape_pct": 42.09,
+          "mean_bias_inr": 931154.85
+        },
+        "mid": {
+          "count": 1592,
+          "mae_inr": 1790474.48,
+          "mape_pct": 21.32,
+          "mean_bias_inr": 394089.79
+        },
+        "high": {
+          "count": 697,
+          "mae_inr": 5644262.96,
+          "mape_pct": 24.1,
+          "mean_bias_inr": -2050237.78
+        },
+        "luxury": {
+          "count": 203,
+          "mae_inr": 18226796.34,
+          "mape_pct": 27.22,
+          "mean_bias_inr": -11999337.74
+        }
+      },
+      "training_time_sec": 1.11,
+      "sanity_results": {
+        "passed": false,
+        "area_monotonicity_passed": false,
+        "bhk_monotonicity_passed": false,
+        "user_scenario_passed": false,
+        "spatial_consistency_passed": true,
+        "total_tests_run": 9720,
+        "area_violations": 3115,
+        "bhk_violations": 564,
+        "user_scenario_violations": 37,
+        "spatial_violations": 0
+      },
+      "sanity_passed": false
+    }
+  }
+}
