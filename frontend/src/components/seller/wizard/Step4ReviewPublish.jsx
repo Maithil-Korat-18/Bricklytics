@@ -122,7 +122,7 @@ export default function Step4ReviewPublish({ onJumpToStep }) {
 
           {isFlat && (
             <>
-              <div>
+              {/* <div>
                 <span className="text-[#727785] block font-medium">Floors / Units per Floor</span>
                 <span className="font-bold text-[#131b2e]">{totalFloors} Floors ({unitsPerFloor} / floor)</span>
               </div>
@@ -137,7 +137,7 @@ export default function Step4ReviewPublish({ onJumpToStep }) {
               <div>
                 <span className="text-[#727785] block font-medium">Units Available</span>
                 <span className="font-bold text-[#006947]">{unitsAvailable} Left</span>
-              </div>
+              </div> */}
             </>
           )}
 
@@ -247,10 +247,10 @@ export default function Step4ReviewPublish({ onJumpToStep }) {
             </span>
           </div>
           <div>
-            <span className="text-[#727785] block font-medium">Maintenance Charges</span>
+            {/* <span className="text-[#727785] block font-medium">Maintenance Charges</span>
             <span className="font-bold text-[#131b2e]">
               ₹{data.maintenanceCharges ? Number(data.maintenanceCharges).toLocaleString('en-IN') : '0'} / Mo
-            </span>
+            </span> */}
           </div>
           <div>
             <span className="text-[#727785] block font-medium">Images Uploaded</span>

@@ -460,9 +460,9 @@ class PropertyService(BaseService):
                 'lowest_performing': self._insight_summary(lowest_investment, 'investment_score', 'Lowest Performing Property'),
                 'most_viewed': self._insight_summary(most_viewed, 'view_count', 'Most Viewed Property'),
                 'highest_buyer_interest': self._insight_summary(most_enquiries, 'inquiry_count', 'Highest Buyer Interest'),
-                'needing_improvement': [
-                    self._insight_summary(p, 'performance_score', 'Needs Improvement') for p in needing_improvement
-                ],
+                # 'needing_improvement': [
+                #     self._insight_summary(p, 'performance_score', 'Needs Improvement') for p in needing_improvement
+                # ],
             }
 
             # ── Property Distribution arrays ──────────────────────────────────

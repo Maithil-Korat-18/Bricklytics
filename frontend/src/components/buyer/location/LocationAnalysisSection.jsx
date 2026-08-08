@@ -25,9 +25,9 @@ export default function LocationAnalysisSection({ property }) {
           </p>
         </div>
 
-        <div className="text-xs text-slate-400 font-semibold">
+        {/* <div className="text-xs text-slate-400 font-semibold">
           Hover over markers to view facility details & travel distance
-        </div>
+        </div> */}
       </div>
 
       {/* Hero Full-Width Interactive Map */}

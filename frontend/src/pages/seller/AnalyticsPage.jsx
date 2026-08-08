@@ -1,17 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import {
-  Building2,
-  Eye,
-  MessageSquare,
-  RefreshCw,
-  Tag,
-  Sparkles,
-  Search,
-  Check,
-  X,
-  Mail,
-  ChevronLeft,
-  ChevronRight,
+import {Building2,Eye,MessageSquare,RefreshCw,Tag,Sparkles,Search,Check,X,Mail,
   Building,
   Home,
   TrendingUp,
@@ -33,18 +21,7 @@ import {
   Send,
 } from 'lucide-react';
 import { useToast } from '../../components/common/ToastContext';
-import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from 'recharts';
+import {Bar,BarChart,ResponsiveContainer,Tooltip,XAxis,YAxis,PieChart,Pie,Cell,Legend,} from 'recharts';
 import ContentContainer from '../../components/common/ContentContainer';
 import PageHeader from '../../components/common/PageHeader';
 import { propertyApi } from '../../services/propertyApi';
@@ -372,7 +349,7 @@ export default function AnalyticsPage() {
           {/* ── SECTION 4: PROPERTY DISTRIBUTION CHARTS ──────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Property Type Distribution */}
-            {(data.type_distribution?.length > 0) && (
+            {/* {(data.type_distribution?.length > 0) && (
               <div className="card-lvl1 p-6 space-y-4">
                 <div>
                   <h3 className="text-base font-bold text-[#131b2e]">Property Type Distribution</h3>
@@ -391,7 +368,7 @@ export default function AnalyticsPage() {
                   </ResponsiveContainer>
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* BHK Distribution */}
             {(data.bhk_distribution?.length > 0) && (

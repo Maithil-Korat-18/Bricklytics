@@ -27,22 +27,11 @@ POSSIBLE_CSV_PATHS = [
     os.path.join(settings.BASE_DIR, 'property_location_amenities.csv'),
 ]
 
-APARTMENT_NEW_IMAGES = [
-    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1200",
-    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=1200",
-    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1200",
-    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200",
-    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200",
-    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1200",
+APARTMENT_COVER_IMAGES = [
+    f"/media/properties/whatsapp/whatsapp_cover_{i}.jpeg" for i in range(1, 27)
 ]
-
-APARTMENT_RESALE_IMAGES = [
-    "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=1200",
-    "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=1200",
-    "https://images.unsplash.com/photo-1620626011761-996317b8d101?q=80&w=1200",
-    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1200",
-    "https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1200",
-]
+APARTMENT_NEW_IMAGES = APARTMENT_COVER_IMAGES
+APARTMENT_RESALE_IMAGES = APARTMENT_COVER_IMAGES
 
 VILLA_NEW_IMAGES = [
     "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200",

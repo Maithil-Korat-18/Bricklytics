@@ -1025,15 +1025,28 @@ def seed():
     ]
 
     print("\n--- Inserting Seller 1 Properties ---")
+    wa_counter = 1
     for idx, raw in enumerate(s1_props, 1):
         imgs_meta = raw.pop('images_data', [])
         images_list = []
+        is_apt = raw.get('property_type') in ['apartment', 'flat']
+        if is_apt:
+            wa_url = f"/media/properties/whatsapp/whatsapp_cover_{(wa_counter % 26) or 26}.jpeg"
+            wa_counter += 1
+            images_list.append(PropertyImage(
+                id=str(ObjectId()),
+                url=wa_url,
+                file_path=wa_url,
+                is_cover=True,
+                caption=f"{raw.get('title', 'Apartment')} Cover Photo",
+                created_at=datetime.now(timezone.utc)
+            ))
         for i_idx, img_item in enumerate(imgs_meta):
             images_list.append(PropertyImage(
                 id=str(ObjectId()),
                 url=img_item['url'],
                 file_path=img_item['url'],
-                is_cover=(i_idx == 0),
+                is_cover=(not is_apt and i_idx == 0),
                 caption=img_item['caption'],
                 created_at=datetime.now(timezone.utc)
             ))
@@ -1054,12 +1067,24 @@ def seed():
     for idx, raw in enumerate(s2_props, 1):
         imgs_meta = raw.pop('images_data', [])
         images_list = []
+        is_apt = raw.get('property_type') in ['apartment', 'flat']
+        if is_apt:
+            wa_url = f"/media/properties/whatsapp/whatsapp_cover_{(wa_counter % 26) or 26}.jpeg"
+            wa_counter += 1
+            images_list.append(PropertyImage(
+                id=str(ObjectId()),
+                url=wa_url,
+                file_path=wa_url,
+                is_cover=True,
+                caption=f"{raw.get('title', 'Apartment')} Cover Photo",
+                created_at=datetime.now(timezone.utc)
+            ))
         for i_idx, img_item in enumerate(imgs_meta):
             images_list.append(PropertyImage(
                 id=str(ObjectId()),
                 url=img_item['url'],
                 file_path=img_item['url'],
-                is_cover=(i_idx == 0),
+                is_cover=(not is_apt and i_idx == 0),
                 caption=img_item['caption'],
                 created_at=datetime.now(timezone.utc)
             ))

@@ -8,6 +8,8 @@ const apiOrigin = (() => {
   }
 })();
 
+export const WHATSAPP_APARTMENT_COVERS = Array.from({ length: 26 }, (_, i) => `/media/properties/whatsapp/whatsapp_cover_${i + 1}.jpeg`);
+
 /** Standard neutral fallback placeholder ONLY used when a property genuinely has 0 uploaded/imported images. */
 export const DEFAULT_PROPERTY_PLACEHOLDER = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80';
 
@@ -16,6 +18,17 @@ export function getPropertyMediaUrl(url) {
   if (!url || typeof url !== 'string') return url;
   if (/^(https?:|blob:|data:)/i.test(url)) return url;
   return `${apiOrigin}${url.startsWith('/') ? url : `/${url}`}`;
+}
+
+function getApartmentDefaultCover(property) {
+  const pId = String(property?.id || property?._id || property?.title || '0');
+  let hash = 0;
+  for (let i = 0; i < pId.length; i++) {
+    hash = (hash << 5) - hash + pId.charCodeAt(i);
+    hash |= 0;
+  }
+  const idx = Math.abs(hash) % WHATSAPP_APARTMENT_COVERS.length;
+  return getPropertyMediaUrl(WHATSAPP_APARTMENT_COVERS[idx]);
 }
 
 /**
@@ -44,6 +57,12 @@ export function getPropertyCoverImage(property) {
   const singleCover = property.cover_image || property.property_image || property.image_url || property.image;
   if (singleCover && typeof singleCover === 'string' && singleCover.trim() !== '') {
     return getPropertyMediaUrl(singleCover);
+  }
+
+  // 5. If apartment, return a default WhatsApp cover photo
+  const pType = String(property.property_type || '').toLowerCase();
+  if (pType === 'apartment' || pType === 'flat') {
+    return getApartmentDefaultCover(property);
   }
 
   return null;
