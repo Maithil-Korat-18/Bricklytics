@@ -43,8 +43,8 @@ def connect_mongodb() -> None:
             # Connection pool settings (tune for production)
             maxPoolSize=50,
             minPoolSize=5,
-            connectTimeoutMS=5_000,
-            serverSelectionTimeoutMS=5_000,
+            connectTimeoutMS=20_000,
+            serverSelectionTimeoutMS=20_000,
             retryWrites=True,
             uuidRepresentation='standard',
         )
