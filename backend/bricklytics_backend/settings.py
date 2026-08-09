@@ -13,8 +13,8 @@ ML_MODELS_DIR = BASE_DIR / 'ml_models'
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-bricklytics-secret-key-change-in-prod-2026')
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
-
+ALLOWED_HOSTS = ['*']  # Or your Render & Vercel domain names
+CORS_ALLOW_ALL_ORIGINS = True
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
@@ -44,6 +44,8 @@ MIDDLEWARE = [
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'https://*.vercel.app',
+    'https://*.onrender.com',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True

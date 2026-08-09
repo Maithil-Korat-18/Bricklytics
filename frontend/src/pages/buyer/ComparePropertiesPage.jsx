@@ -469,7 +469,7 @@ export default function ComparePropertiesPage() {
           <ComparisonTable title="Project Details" properties={properties} rows={detailRows} />
 
           <section>
-            <h2 className="font-headline-md text-on-surface mb-4">Project Amenities & Nearby Places</h2>
+            <h2 className="font-headline-md text-on-surface mb-4">Project Amenities </h2>
             <div className="comparison-print-table overflow-x-auto rounded-xl border border-outline-variant/50 bg-surface-container-lowest shadow-ambient">
               <div className="comparison-table-content min-w-[760px]">
                 <div className="grid bg-inverse-surface px-4 py-3 text-[11px] font-mono uppercase tracking-wide text-inverse-on-surface" style={{ gridTemplateColumns: `180px repeat(${properties.length}, minmax(0, 1fr))` }}><div>Feature / nearby place</div>{properties.map((property) => <div key={property.id} className="truncate px-2">{property.title}</div>)}</div>
@@ -477,9 +477,9 @@ export default function ComparePropertiesPage() {
                   <div key={`amenity-${name}`} className={`grid items-center px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-surface-container-low/50' : ''}`} style={{ gridTemplateColumns: `180px repeat(${properties.length}, minmax(0, 1fr))` }}><div className="font-semibold text-on-surface-variant">{name}</div>{properties.map((property) => { const normList = normalizeAmenities(property.amenities || []); const hasAmenity = normList.includes(name); return <div key={property.id} className="px-2">{hasAmenity ? <Check className="h-5 w-5 text-tertiary" /> : <X className="h-5 w-5 text-error" />}</div>; })}</div>
                 ))}
                 {/* <div className="border-y border-outline-variant/40 bg-primary/5 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-primary">Nearby places</div> */}
-                {nearbyCategories.map((category, index) => (
+                {/* {nearbyCategories.map((category, index) => (
                   <div key={category} className={`grid items-center px-4 py-3 text-sm ${(projectAmenities.length + index) % 2 === 0 ? 'bg-surface-container-low/50' : ''}`} style={{ gridTemplateColumns: `180px repeat(${properties.length}, minmax(0, 1fr))` }}><div className="font-semibold text-on-surface-variant">{category}</div>{properties.map((property) => <div key={property.id} className="px-2">{hasNearbyCategory(property, category) ? <Check className="h-5 w-5 text-tertiary" /> : <X className="h-5 w-5 text-error" />}</div>)}</div>
-                ))}
+                ))} */}
               </div>
             </div>
           </section>

@@ -711,7 +711,7 @@ function Hero({ onNavigate }) {
         </div>
 
         {/* Bottom-left trust badge */}
-        <div className="bl-glass" style={{
+        {/* <div className="bl-glass" style={{
           position: "absolute",
           left: "clamp(24px,5vw,72px)",
           bottom: "8%",
@@ -738,7 +738,7 @@ function Hero({ onNavigate }) {
               }} />
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* Slideshow dot indicators */}
         <div style={{
