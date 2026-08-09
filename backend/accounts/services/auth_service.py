@@ -41,10 +41,13 @@ class AuthService(BaseService):
 
         from django.contrib.auth.hashers import make_password
 
+        import os
+        auto_verify = os.getenv('AUTO_VERIFY_USERS', 'True').lower() in ('true', '1', 't')
+
         user_data = {
             **data,
             'password_hash': make_password(raw_password),
-            'is_verified': False,
+            'is_verified': auto_verify,
             'is_active': True,
             'verification_code': code,
             'verification_code_expires_at': code_expires_at,
@@ -142,7 +145,12 @@ class AuthService(BaseService):
             raise AuthenticationError("Invalid email address or password.")
 
         if not user.is_verified:
-            raise AuthenticationError("Your email address is not verified. Please verify your email first.")
+            import os
+            if os.getenv('AUTO_VERIFY_USERS', 'True').lower() in ('true', '1', 't'):
+                user.is_verified = True
+                user.save()
+            else:
+                raise AuthenticationError("Your email address is not verified. Please verify your email first.")
 
         if not user.is_active:
             raise AuthenticationError("Your account has been deactivated. Please contact support.")
