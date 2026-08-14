@@ -30,8 +30,8 @@ media/
 # Logs (never commit logs)
 logs/*.log
 
-# ML Models (large binary files — use artifact storage)
-ml_models/*.joblib
+# ML Models (joblib models allowed for deployment; pkl ignored)
+# ml_models/*.joblib
 ml_models/*.pkl
 
 # IDE
